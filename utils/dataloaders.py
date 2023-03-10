@@ -509,6 +509,7 @@ class LoadImagesAndLabels(Dataset):
         self.labels = list(labels)
         self.shapes = np.array(shapes)
         self.im_files = list(cache.keys())  # update
+        print('IMFILES', self.im_files[0])
         self.label_files = img2label_paths(cache.keys())  # update
 
         # Filter images
@@ -516,8 +517,6 @@ class LoadImagesAndLabels(Dataset):
             include = np.array([len(x) >= min_items for x in self.labels]).nonzero()[0].astype(int)
             LOGGER.info(f'{prefix}{n - len(include)}/{n} images filtered from dataset')
             self.im_files = [self.im_files[i] for i in include]
-            print('IMFILES', self.im_files[0])
-            print('INCLUDE', include)
             self.label_files = [self.label_files[i] for i in include]
             self.labels = [self.labels[i] for i in include]
             self.segments = [self.segments[i] for i in include]
@@ -549,7 +548,6 @@ class LoadImagesAndLabels(Dataset):
             s = self.shapes  # wh
             ar = s[:, 1] / s[:, 0]  # aspect ratio
             irect = ar.argsort()
-            print('IRECT:', irect)
             self.im_files = [self.im_files[i] for i in irect]
             self.label_files = [self.label_files[i] for i in irect]
             self.labels = [self.labels[i] for i in irect]
