@@ -130,6 +130,12 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
+
+    layers = [module for module in model.modules() if not isinstance(module, nn.Sequential)]
+    for layer in layers:
+        print(layer)
+    assert(False)
+
     amp = check_amp(model)  # check AMP
 
     # Freeze

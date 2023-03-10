@@ -847,6 +847,19 @@ class Proto(nn.Module):
         return self.cv3(self.cv2(self.upsample(self.cv1(x))))
 
 
+class Seg(nn.Module):
+
+    def __init__(self, in_channels):
+        super().__init__()
+        self.cv1 = Conv(in_channels, 32, k=3)
+        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        self.cv2 = Conv(32, 32, k=3)
+        self.cv3 = Conv(32, 1)
+
+    def forward(self, x):
+        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+
+
 class Classify(nn.Module):
     # YOLOv5 classification head, i.e. x(b,c1,20,20) to x(b,c2)
     def __init__(self,
