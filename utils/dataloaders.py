@@ -507,6 +507,7 @@ class LoadImagesAndLabels(Dataset):
         nl = len(np.concatenate(labels, 0))  # number of labels
         assert nl > 0 or not augment, f'{prefix}All labels empty in {cache_path}, can not start training. {HELP_URL}'
         self.labels = list(labels)
+        print('Labels:', self.labels)
         self.shapes = np.array(shapes)
         self.im_files = list(cache.keys())  # update
         self.label_files = img2label_paths(cache.keys())  # update
@@ -516,6 +517,8 @@ class LoadImagesAndLabels(Dataset):
             include = np.array([len(x) >= min_items for x in self.labels]).nonzero()[0].astype(int)
             LOGGER.info(f'{prefix}{n - len(include)}/{n} images filtered from dataset')
             self.im_files = [self.im_files[i] for i in include]
+            print('IMFILES', self.im_files[0])
+            print('INCLUDE', include)
             self.label_files = [self.label_files[i] for i in include]
             self.labels = [self.labels[i] for i in include]
             self.segments = [self.segments[i] for i in include]
@@ -547,6 +550,7 @@ class LoadImagesAndLabels(Dataset):
             s = self.shapes  # wh
             ar = s[:, 1] / s[:, 0]  # aspect ratio
             irect = ar.argsort()
+            print('IRECT:', irect)
             self.im_files = [self.im_files[i] for i in irect]
             self.label_files = [self.label_files[i] for i in irect]
             self.labels = [self.labels[i] for i in irect]
@@ -580,7 +584,9 @@ class LoadImagesAndLabels(Dataset):
             for i, x in pbar:
                 if cache_images == 'disk':
                     b += self.npy_files[i].stat().st_size
+                    print('DISK')
                 else:  # 'ram'
+                    print('RAM')
                     self.ims[i], self.im_hw0[i], self.im_hw[i] = x  # im, hw_orig, hw_resized = load_image(self, i)
                     b += self.ims[i].nbytes
                 pbar.desc = f'{prefix}Caching images ({b / gb:.1f}GB {cache_images})'

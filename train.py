@@ -131,11 +131,15 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
 
+    '''
+    Extra model print
+    '''
     layers = [module for module in model.modules() if not isinstance(module, nn.Sequential)]
     for layer in layers:
         print(layer)
-    assert(False)
-
+    '''
+    end
+    '''
     amp = check_amp(model)  # check AMP
 
     # Freeze
