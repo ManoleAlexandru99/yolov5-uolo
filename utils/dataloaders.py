@@ -584,7 +584,7 @@ class LoadImagesAndLabels(Dataset):
                 if cache_images == 'disk':
                     b += self.npy_files[i].stat().st_size
                 else:  # 'ram'
-                    self.ims[i], self.im_hw0[i], self.im_hw[i] = x  # im, hw_orig, hw_resized = load_image(self, i)
+                    self.ims[i], self.im_hw0[i], self.im_hw[i], seg = x  # im, hw_orig, hw_resized = load_image(self, i)
                     b += self.ims[i].nbytes
                 pbar.desc = f'{prefix}Caching images ({b / gb:.1f}GB {cache_images})'
             pbar.close()
@@ -669,7 +669,7 @@ class LoadImagesAndLabels(Dataset):
 
         else:
             # Load image
-            img, (h0, w0), (h, w) = self.load_image(index)
+            img, (h0, w0), (h, w), seg = self.load_image(index)
 
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
@@ -730,28 +730,26 @@ class LoadImagesAndLabels(Dataset):
     def load_image(self, i):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
         im, f, fn = self.ims[i], self.im_files[i], self.npy_files[i],
+        seg = None
         if im is None:  # not cached in RAM
             if fn.exists():  # load npy
                 im = np.load(fn)
             else:  # read image
-                print(f)
                 split_path = f.split('/')
-                print(split_path)
                 split_path[4] = 'masks'
                 split_path[5] = split_path[5][:-3] + 'png'
                 seg_path = '/'.join(split_path)
-                print(seg_path)
                 seg = cv2.imread(seg_path)
                 im = cv2.imread(f)  # BGR
-                assert False
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
             if r != 1:  # if sizes are not equal
                 interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
                 im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
-            return im, (h0, w0), im.shape[:2]  # im, hw_original, hw_resized
-        return self.ims[i], self.im_hw0[i], self.im_hw[i]  # im, hw_original, hw_resized
+                seg = cv2.resize(seg, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
+            return im, (h0, w0), im.shape[:2], seg  # im, hw_original, hw_resized
+        return self.ims[i], self.im_hw0[i], self.im_hw[i], seg  # im, hw_original, hw_resized
 
     def cache_images_to_disk(self, i):
         # Saves an image as an *.npy file for faster loading
@@ -768,7 +766,7 @@ class LoadImagesAndLabels(Dataset):
         random.shuffle(indices)
         for i, index in enumerate(indices):
             # Load image
-            img, _, (h, w) = self.load_image(index)
+            img, _, (h, w), seg = self.load_image(index)
 
             # place img in img4
             if i == 0:  # top left
@@ -826,7 +824,7 @@ class LoadImagesAndLabels(Dataset):
         hp, wp = -1, -1  # height, width previous
         for i, index in enumerate(indices):
             # Load image
-            img, _, (h, w) = self.load_image(index)
+            img, _, (h, w), seg = self.load_image(index)
 
             # place img in img9
             if i == 0:  # center
