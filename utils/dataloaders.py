@@ -734,7 +734,15 @@ class LoadImagesAndLabels(Dataset):
             if fn.exists():  # load npy
                 im = np.load(fn)
             else:  # read image
+                print(f)
+                split_path = f.split('/')
+                print(split_path)
+                split_path[4] = 'masks'
+                split_path[5] = split_path[5][:-3] + '.png'
+                seg_path = '/'.join(split_path)
+                print(seg_path)
                 im = cv2.imread(f)  # BGR
+                assert False
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
