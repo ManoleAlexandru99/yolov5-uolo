@@ -509,7 +509,6 @@ class LoadImagesAndLabels(Dataset):
         self.labels = list(labels)
         self.shapes = np.array(shapes)
         self.im_files = list(cache.keys())  # update
-        print('IMFILES', self.im_files[0])
         self.label_files = img2label_paths(cache.keys())  # update
 
         # Filter images
@@ -674,13 +673,14 @@ class LoadImagesAndLabels(Dataset):
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
+            seg, _, _ = letterbox(img, shape, auto=False, scaleup=self.augment, color=(0,0,0))
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
             labels = self.labels[index].copy()
             if labels.size:  # normalized xywh to pixel xyxy format
                 labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
 
-            if self.augment:
+            if False:# self.augment:
                 img, labels = random_perspective(img,
                                                  labels,
                                                  degrees=hyp['degrees'],
@@ -704,12 +704,14 @@ class LoadImagesAndLabels(Dataset):
             # Flip up-down
             if random.random() < hyp['flipud']:
                 img = np.flipud(img)
+                seg = np.flipud(seg)
                 if nl:
                     labels[:, 2] = 1 - labels[:, 2]
 
             # Flip left-right
             if random.random() < hyp['fliplr']:
                 img = np.fliplr(img)
+                seg = np.fliplr(seg)
                 if nl:
                     labels[:, 1] = 1 - labels[:, 1]
 
@@ -725,7 +727,11 @@ class LoadImagesAndLabels(Dataset):
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
 
-        return torch.from_numpy(img), labels_out, self.im_files[index], shapes
+        # Convert Mask
+        seg = cv2.cvtColor(seg, cv2.COLOR_BGR2GRAY)
+        seg = np.ascontiguousarray(seg)
+
+        return torch.from_numpy(img), labels_out, self.im_files[index], shapes, torch.from_numpy(seg)
 
     def load_image(self, i):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
