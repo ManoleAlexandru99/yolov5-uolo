@@ -738,9 +738,10 @@ class LoadImagesAndLabels(Dataset):
                 split_path = f.split('/')
                 print(split_path)
                 split_path[4] = 'masks'
-                split_path[5] = split_path[5][:-3] + '.png'
+                split_path[5] = split_path[5][:-3] + 'png'
                 seg_path = '/'.join(split_path)
                 print(seg_path)
+                seg = cv2.imread(seg_path)
                 im = cv2.imread(f)  # BGR
                 assert False
                 assert im is not None, f'Image Not Found {f}'
