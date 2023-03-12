@@ -746,7 +746,6 @@ class LoadImagesAndLabels(Dataset):
                 split_path[5] = split_path[5][:-3] + 'png'
                 seg_path = '/'.join(split_path)
                 seg = cv2.imread(seg_path)
-                seg = np.expand_dims(seg, axis=0)
 
                 im = cv2.imread(f)  # BGR
 
@@ -757,6 +756,7 @@ class LoadImagesAndLabels(Dataset):
                 interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
                 im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
                 seg = cv2.resize(seg, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
+            seg = np.expand_dims(seg, axis=0)
             return im, (h0, w0), im.shape[:2], seg  # im, hw_original, hw_resized
         return self.ims[i], self.im_hw0[i], self.im_hw[i], seg  # im, hw_original, hw_resized
 
