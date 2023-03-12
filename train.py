@@ -292,9 +292,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
         optimizer.zero_grad()
         for i, (imgs, targets, paths, _, segs) in pbar:  # batch -------------------------------------------------------------
+            print(imgs.shape)
+            print(segs.shape)
+            assert False
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
+            segs = segs.to(device, non_blocking=True).float() / 255
 
             # Warmup
             if ni <= nw:

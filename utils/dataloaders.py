@@ -747,6 +747,7 @@ class LoadImagesAndLabels(Dataset):
                 seg_path = '/'.join(split_path)
                 seg = cv2.imread(seg_path)
                 im = cv2.imread(f)  # BGR
+
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
