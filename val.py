@@ -195,14 +195,17 @@ def run(
     jdict, stats, ap, ap_class = [], [], [], []
     callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT)  # progress bar
-    for batch_i, (im, targets, paths, shapes) in enumerate(pbar):
+    for batch_i, (im, targets, paths, shapes, segs) in enumerate(pbar):
         callbacks.run('on_val_batch_start')
         with dt[0]:
             if cuda:
                 im = im.to(device, non_blocking=True)
+                segs = segs.to(device, non_blocking=True)
                 targets = targets.to(device)
             im = im.half() if half else im.float()  # uint8 to fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0
+            segs = segs.half() if half else segs.float()  # uint8 to fp16/32
+            segs /= 255  # 0 - 255 to 0.0 - 1.0
             nb, _, height, width = im.shape  # batch size, channels, height, width
 
         # Inference
