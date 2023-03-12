@@ -746,6 +746,8 @@ class LoadImagesAndLabels(Dataset):
                 split_path[5] = split_path[5][:-3] + 'png'
                 seg_path = '/'.join(split_path)
                 seg = cv2.imread(seg_path)
+                seg = np.expand_dims(seg, axis=0)
+
                 im = cv2.imread(f)  # BGR
 
                 assert im is not None, f'Image Not Found {f}'
