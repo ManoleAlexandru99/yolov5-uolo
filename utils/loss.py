@@ -119,7 +119,13 @@ class ComputeLoss:
         self.device = device
 
     def __call__(self, preds, targets):  # predictions, targets
-        p, pred_mask = preds
+        if len(preds) == 2:
+            p, pred_mask = preds
+        elif len(preds) == 3:
+            p, pred_mask, train_out = preds
+        else:
+            print(len(preds))
+            assert False
         lcls = torch.zeros(1, device=self.device)  # class loss
         lbox = torch.zeros(1, device=self.device)  # box loss
         lobj = torch.zeros(1, device=self.device)  # object loss
@@ -132,6 +138,7 @@ class ComputeLoss:
 
             n = b.shape[0]  # number of targets
             if n:
+                print('PSHAPE', p.shape)
                 # pxy, pwh, _, pcls = pi[b, a, gj, gi].tensor_split((2, 4, 5), dim=1)  # faster, requires torch 1.8.0
                 pxy, pwh, _, pcls = pi[b, a, gj, gi].split((2, 2, 1, self.nc), 1)  # target-subset of predictions
 
