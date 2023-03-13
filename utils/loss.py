@@ -119,27 +119,15 @@ class ComputeLoss:
         self.device = device
 
     def __call__(self, preds, targets):  # predictions, targets
-        if len(preds) == 2:
-            print("PREDS AS DOUBLE TOUPLE")
-            p, pred_mask = preds
-        # elif len(preds) == 3:
-        #    print('PREDS AS TRIPLE TOUPLE')
-        #    p, pred_mask, train_out = preds
-        else:
-            print('\n!!!!!PREDS AS TRIPLE TOUPLE!!!!!!\n')
-            print(len(preds))
-            assert False
+        p, pred_mask = preds
+
         lcls = torch.zeros(1, device=self.device)  # class loss
         lbox = torch.zeros(1, device=self.device)  # box loss
         lobj = torch.zeros(1, device=self.device)  # object loss
         tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
 
-        print('PSHAPE', len(p))
-        print('p 0', p[0].shape)
-        print('p 1', p[1].shape)
         # Losses
         for i, pi in enumerate(p):  # layer index, layer predictions
-            print('pi', pi.shape)
             b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
             tobj = torch.zeros(pi.shape[:4], dtype=pi.dtype, device=self.device)  # target obj
 

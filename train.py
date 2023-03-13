@@ -134,9 +134,9 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     '''
     Extra model print
     '''
-    layers = [module for module in model.modules() if not isinstance(module, nn.Sequential)]
-    for layer in layers:
-        print(layer)
+    # layers = [module for module in model.modules() if not isinstance(module, nn.Sequential)]
+    # for layer in layers:
+    #    print(layer)
     '''
     end
     '''
