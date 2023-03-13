@@ -122,10 +122,11 @@ class ComputeLoss:
         if len(preds) == 2:
             print("PREDS AS DOUBLE TOUPLE")
             p, pred_mask = preds
-        elif len(preds) == 3:
-            print('PREDS AS TRIPLE TOUPLE')
-            p, pred_mask, train_out = preds
+        # elif len(preds) == 3:
+        #    print('PREDS AS TRIPLE TOUPLE')
+        #    p, pred_mask, train_out = preds
         else:
+            print('\n!!!!!PREDS AS TRIPLE TOUPLE!!!!!!\n')
             print(len(preds))
             assert False
         lcls = torch.zeros(1, device=self.device)  # class loss
