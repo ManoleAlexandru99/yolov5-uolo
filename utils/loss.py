@@ -158,6 +158,10 @@ class ComputeLoss:
                     t[range(n), tcls[i]] = self.cp
                     lcls += self.BCEcls(pcls, t)  # BCE
 
+                # Mask Loss
+                print('\n-----PRED MASK', pred_mask.shape, '-------\n')
+                print('\n-----REAL MASK', seg_masks.shape, '-------\n')
+
                 # Append targets to text file
                 # with open('targets.txt', 'a') as file:
                 #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
