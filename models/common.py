@@ -853,17 +853,18 @@ class Seg(nn.Module):
         super().__init__()
         self.cv1 = Conv(in_channels, 32, k=3)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
-        self.cv2 = Conv(32, 32, k=3)
-        self.cv3 = Conv(32, 1)
+        self.cv2 = Conv(32, 64, k=3)
+        self.cv3 = Conv(64, 1)
 
     def forward(self, x):
-        print('----entry shape', x.shape, '---\n')
+        # print('----entry shape', x.shape, '---\n')
         x = self.cv1(x)
         x = self.upsample(x)
-        print('----upsample shape', x.shape, '---\n')
+        # print('----upsample shape', x.shape, '---\n')
         x = self.cv2(x)
+        x = self.upsample(x)
         x = self.cv3(x)
-        print('----out shape', x.shape, '---\n')
+        # print('----out shape', x.shape, '---\n')
         return x
 
 
