@@ -857,7 +857,14 @@ class Seg(nn.Module):
         self.cv3 = Conv(32, 1)
 
     def forward(self, x):
-        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+        print('----entry shape', x.shape, '---\n')
+        x = self.cv1(x)
+        x = self.upsample(x)
+        print('----upsample shape', x.shape, '---\n')
+        x = self.cv2(x)
+        x = self.cv3(x)
+        print('----out shape', x.shape, '---\n')
+        return x
 
 
 class Classify(nn.Module):
