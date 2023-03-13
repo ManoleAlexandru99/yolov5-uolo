@@ -730,6 +730,7 @@ class LoadImagesAndLabels(Dataset):
 
         # Convert Mask
         seg = cv2.cvtColor(seg, cv2.COLOR_BGR2GRAY)
+        seg = np.expand_dims(seg, axis=0)
         seg = np.ascontiguousarray(seg)
 
         return torch.from_numpy(img), labels_out, self.im_files[index], shapes, torch.from_numpy(seg)
