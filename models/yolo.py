@@ -113,11 +113,11 @@ class SemanticSegment(Detect):
         self.no = 5 + nc  # number of outputs per anchor
         self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
         # self.proto = Proto(ch[0], self.npr, self.nm)  # protos
-        self.semantic_seg = Seg(ch[2])
+        self.semantic_seg = Seg(ch[0])
         self.detect = Detect.forward
 
     def forward(self, x):
-        p = self.semantic_seg(x[2])
+        p = self.semantic_seg(x[0])
         x = self.detect(self, x)
         return (x, p) if self.training else (x[0], p) if self.export else (x[0], p, x[1])
 
