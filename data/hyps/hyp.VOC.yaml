@@ -17,6 +17,7 @@ warmup_epochs: 3.3835
 warmup_momentum: 0.59462
 warmup_bias_lr: 0.18657
 box: 0.02
+seg: 0.1 # seg loss
 cls: 0.21638
 cls_pw: 0.5
 obj: 0.51728

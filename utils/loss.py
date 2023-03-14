@@ -5,6 +5,7 @@ Loss functions
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from utils.metrics import bbox_iou
 from utils.torch_utils import de_parallel
@@ -95,6 +96,7 @@ class ComputeLoss:
     def __init__(self, model, autobalance=False):
         device = next(model.parameters()).device  # get model device
         h = model.hyp  # hyperparameters
+        print('\n-------------H:', h, '--------------\n')
 
         # Define criteria
         BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h['cls_pw']], device=device))
@@ -124,6 +126,7 @@ class ComputeLoss:
         lcls = torch.zeros(1, device=self.device)  # class loss
         lbox = torch.zeros(1, device=self.device)  # box loss
         lobj = torch.zeros(1, device=self.device)  # object loss
+        lseg = torch.zeros(1, device=self.device)
         tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
 
         # Losses
@@ -159,8 +162,10 @@ class ComputeLoss:
                     lcls += self.BCEcls(pcls, t)  # BCE
 
                 # Mask Loss
-                print('\n-----PRED MASK', pred_mask.shape, '-------\n')
-                print('\n-----REAL MASK', seg_masks.shape, '-------\n')
+                # print('\n-----PRED MASK', pred_mask.shape, '-------\n')
+                # print('\n-----REAL MASK', seg_masks.shape, '-------\n')
+                seg_loss = F.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+                lseg += seg_loss
 
                 # Append targets to text file
                 # with open('targets.txt', 'a') as file:
@@ -177,8 +182,12 @@ class ComputeLoss:
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']
         bs = tobj.shape[0]  # batch size
+        lseg *= self.hyp['seg'] / bs
 
-        return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
+        total_loss = lbox + lobj + lcls + lseg
+
+        # return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
+        return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
