@@ -68,6 +68,7 @@ class Loggers():
             'train/box_loss',
             'train/obj_loss',
             'train/cls_loss',  # train loss
+            'train/seg_loss',
             'metrics/precision',
             'metrics/recall',
             'metrics/mAP_0.5',
@@ -75,6 +76,7 @@ class Loggers():
             'val/box_loss',
             'val/obj_loss',
             'val/cls_loss',  # val loss
+            'val/seg_loss',
             'x/lr0',
             'x/lr1',
             'x/lr2']  # params
