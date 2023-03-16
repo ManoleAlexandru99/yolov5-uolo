@@ -183,7 +183,7 @@ class ComputeLoss:
         lcls *= self.hyp['cls']
         bs = tobj.shape[0]  # batch size
         lseg *= self.hyp['seg'] / bs
-        print(f'\n---- Losses: {lbox: .5f} {lobj: .5f} {lcls: .5f} Seg {lseg: .5f} ------\n')
+        print(f'\n---- Losses: {(lbox.numpy()): .5f} {(lobj.numpy()): .5f} {(lcls.numpy()): .5f} Seg {(lseg.numpy()): .5f} ------\n')
 
         total_loss = lbox + lobj + lcls + lseg
 
