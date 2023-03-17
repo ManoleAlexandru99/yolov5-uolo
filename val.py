@@ -231,7 +231,7 @@ def run(
             preds, pred_mask, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
 
         ious = compute_seg_iou(pred_mask, segs)
-        print('\n------------ IoU: ', ious, '------------\n')
+        # print('\n------------ IoU: ', ious, '------------\n')
         iou += ious[0]
 
         # Loss
