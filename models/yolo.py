@@ -111,7 +111,7 @@ class SemanticSegment(Detect):
     def __init__(self, nc=80, anchors=(), ch=(), inplace=True):
         super().__init__(nc, anchors, ch, inplace)
         self.no = 5 + nc  # number of outputs per anchor
-        self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
+        # self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
         # self.proto = Proto(ch[0], self.npr, self.nm)  # protos
         self.semantic_seg = Seg(ch[0])
         self.detect = Detect.forward
