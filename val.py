@@ -78,8 +78,10 @@ def compute_seg_iou(pred, target, n_classes=2):
   for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
     pred_inds = pred == cls
     print('pred_inds', pred_inds)
+    print(pred_inds.shape)
     target_inds = target == cls
-    print('target_inds', pred_inds)
+    print('target_inds', target_inds)
+    print(target_inds.shape)
     intersection = (pred_inds[target_inds]).long().sum().data.cpu()[0]  # Cast to long to prevent overflows
     union = pred_inds.long().sum().data.cpu()[0] + target_inds.long().sum().data.cpu()[0] - intersection
     if union == 0:
