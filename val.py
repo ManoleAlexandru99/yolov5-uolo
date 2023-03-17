@@ -69,6 +69,23 @@ def save_one_json(predn, jdict, path, class_map):
             'bbox': [round(x, 3) for x in b],
             'score': round(p[4], 5)})
 
+def compute_seg_iou(pred, target, n_classes=2):
+  ious = []
+  pred = pred.view(-1)
+  target = target.view(-1)
+
+  # Ignore IoU for background class ("0")
+  for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
+    pred_inds = pred == cls
+    target_inds = target == cls
+    intersection = (pred_inds[target_inds]).long().sum().data.cpu()[0]  # Cast to long to prevent overflows
+    union = pred_inds.long().sum().data.cpu()[0] + target_inds.long().sum().data.cpu()[0] - intersection
+    if union == 0:
+      ious.append(float('nan'))  # If there is no ground truth, do not include in evaluation
+    else:
+      ious.append(float(intersection) / float(max(union, 1)))
+  return np.array(ious)
+
 
 def process_batch(detections, labels, iouv):
     """
@@ -188,8 +205,9 @@ def run(
     if isinstance(names, (list, tuple)):  # old format
         names = dict(enumerate(names))
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
-    s = ('%22s' + '%11s' * 6) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95')
+    s = ('%22s' + '%11s' * 7) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg IoU')
     tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    iou = 0.0
     dt = Profile(), Profile(), Profile()  # profiling times
     loss = torch.zeros(4, device=device)
     jdict, stats, ap, ap_class = [], [], [], []
@@ -211,6 +229,9 @@ def run(
         # Inference
         with dt[1]:
             preds, pred_mask, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
+
+        ious = compute_seg_iou(pred_mask, segs)
+        print('\n------------ IoU: ', ious, '------------\n')
 
         # Loss
         if compute_loss:
