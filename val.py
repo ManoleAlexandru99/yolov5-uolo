@@ -232,6 +232,7 @@ def run(
 
         ious = compute_seg_iou(pred_mask, segs)
         print('\n------------ IoU: ', ious, '------------\n')
+        iou += ious[0]
 
         # Loss
         if compute_loss:
@@ -303,15 +304,15 @@ def run(
     nt = np.bincount(stats[3].astype(int), minlength=nc)  # number of targets per class
 
     # Print results
-    pf = '%22s' + '%11i' * 2 + '%11.3g' * 4  # print format
-    LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map))
+    pf = '%22s' + '%11i' * 2 + '%11.3g' * 5  # print format
+    LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map, iou))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING ⚠️ no labels found in {task} set, can not compute metrics without labels')
 
     # Print results per class
     if (verbose or (nc < 50 and not training)) and nc > 1 and len(stats):
         for i, c in enumerate(ap_class):
-            LOGGER.info(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i]))
+            LOGGER.info(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i], iou))
 
     # Print speeds
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
