@@ -82,7 +82,7 @@ def compute_seg_iou(pred, target, n_classes=2):
     target_inds = target == cls
     print('target_inds', target_inds)
     print(target_inds.shape)
-    intersection = (pred_inds[target_inds]).long().sum().data.cpu()[0]  # Cast to long to prevent overflows
+    intersection = (pred_inds[target_inds]).long().sum().data.cpu()  # Cast to long to prevent overflows
     union = pred_inds.long().sum().data.cpu()[0] + target_inds.long().sum().data.cpu()[0] - intersection
     if union == 0:
       ious.append(float('nan'))  # If there is no ground truth, do not include in evaluation
