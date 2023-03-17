@@ -70,25 +70,21 @@ def save_one_json(predn, jdict, path, class_map):
             'score': round(p[4], 5)})
 
 def compute_seg_iou(pred, target, n_classes=2):
-  ious = []
-  pred = pred.view(-1)
-  target = target.view(-1)
+    ious = []
+    pred = pred.view(-1)
+    target = target.view(-1)
 
-  # Ignore IoU for background class ("0")
-  for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
-    pred_inds = pred == cls
-    print('pred_inds', pred_inds)
-    print(pred_inds.shape)
-    target_inds = target == cls
-    print('target_inds', target_inds)
-    print(target_inds.shape)
-    intersection = (pred_inds[target_inds]).long().sum().data.cpu()  # Cast to long to prevent overflows
-    union = pred_inds.long().sum().data.cpu()[0] + target_inds.long().sum().data.cpu()[0] - intersection
-    if union == 0:
-      ious.append(float('nan'))  # If there is no ground truth, do not include in evaluation
-    else:
-      ious.append(float(intersection) / float(max(union, 1)))
-  return np.array(ious)
+    # Ignore IoU for background class ("0")
+    for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
+        pred_inds = pred == cls
+        target_inds = target == cls
+        intersection = (pred_inds[target_inds]).long().sum().data.cpu()  # Cast to long to prevent overflows
+        union = pred_inds.long().sum().data.cpu() + target_inds.long().sum().data.cpu() - intersection
+        if union == 0:
+            ious.append(float('nan'))  # If there is no ground truth, do not include in evaluation
+        else:
+            ious.append(float(intersection) / float(max(union, 1)))
+    return np.array(ious)
 
 
 def process_batch(detections, labels, iouv):
