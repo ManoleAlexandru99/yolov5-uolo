@@ -19,8 +19,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from models.common import Seg
-from models.yolo import SemanticSegment
 from utils.general import LOGGER, check_version, colorstr, file_date, git_describe
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
@@ -323,12 +321,6 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in model.modules():
         print('\n--------MODULES', v, '----------\n')
-        if isinstance(v, Seg):
-            print('SEG children')
-            print(v.children())
-        if isinstance(v, SemanticSegment):
-            print('SEMANTIC SEG Children')
-            print(v.children())
         for p_name, p in v.named_parameters(recurse=0):
             if p_name == 'bias':  # bias (no decay)
                 g[2].append(p)
