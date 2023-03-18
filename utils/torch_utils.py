@@ -330,6 +330,8 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
                 g[1].append(p)
             else:
                 g[0].append(p)  # weight (with decay)
+        else:
+            print('No params')
 
     if name == 'Adam':
         optimizer = torch.optim.Adam(g[2], lr=lr, betas=(momentum, 0.999))  # adjust beta1 to momentum
