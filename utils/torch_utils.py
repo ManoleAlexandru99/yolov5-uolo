@@ -315,26 +315,7 @@ def copy_attr(a, b, include=(), exclude=()):
             setattr(a, k, v)
 
 
-def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
-    # YOLOv5 3-param group optimizer: 0) weights with decay, 1) weights no decay, 2) biases no decay
-    g = [], [], []  # optimizer parameter groups
-    bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
-
-    for m_index, v in enumerate(model.modules()):
-        params = False
-        print('\n--------MODULES',m_index,  v, '----------\n')
-        for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
-            params = True
-            # print('\n PNAME:', p_name, '\n')
-            if p_name == 'bias':  # bias (no decay)
-                g[2].append(p)
-            elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
-                g[1].append(p)
-            else:
-                g[0].append(p)  # weight (with decay)
-        # if not params:
-        #    print('No params')
-
+def get_optimizer(name, lr, momentum, decay, g):
     if name == 'Adam':
         optimizer = torch.optim.Adam(g[2], lr=lr, betas=(momentum, 0.999))  # adjust beta1 to momentum
     elif name == 'AdamW':
@@ -351,6 +332,42 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     LOGGER.info(f"{colorstr('optimizer:')} {type(optimizer).__name__}(lr={lr}) with parameter groups "
                 f'{len(g[1])} weight(decay=0.0), {len(g[0])} weight(decay={decay}), {len(g[2])} bias')
     return optimizer
+
+
+def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
+    # YOLOv5 3-param group optimizer: 0) weights with decay, 1) weights no decay, 2) biases no decay
+    g = [], [], []  # optimizer parameter groups
+    g_det = [], [], []
+    g_seg = [], [], []
+    bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
+
+    for m_index, v in enumerate(model.modules()):
+        print('\n--------MODULES',m_index,  v, '----------\n')
+        '''
+        287 - 290 Det heads
+        291 - 302 Seg heads
+        '''
+        if m_index < 291 or m_index > 302: # DETECTION Optimizer
+            for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
+                if p_name == 'bias':  # bias (no decay)
+                    g_det[2].append(p)
+                elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
+                    g_det[1].append(p)
+                else:
+                    g_det[0].append(p)  # weight (with decay)
+
+        if m_index < 287 or m_index > 290: # SEGMENTATION Optimizer
+            for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
+                if p_name == 'bias':  # bias (no decay)
+                    g_seg[2].append(p)
+                elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
+                    g_seg[1].append(p)
+                else:
+                    g_seg[0].append(p)  # weight (with decay)
+
+    det_optimizer = get_optimizer(name, lr, momentum, decay, g_det)
+    seg_optimizer = get_optimizer(name, lr, momentum, decay, g_seg)
+    return det_optimizer, seg_optimizer
 
 
 def smart_hub_load(repo='ultralytics/yolov5', model='yolov5s', **kwargs):
