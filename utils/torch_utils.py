@@ -335,9 +335,6 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
         if not params:
             print('No params')
 
-    for name, module in model.named_children():
-        print('\n-----NAMED:', name, module)
-
     if name == 'Adam':
         optimizer = torch.optim.Adam(g[2], lr=lr, betas=(momentum, 0.999))  # adjust beta1 to momentum
     elif name == 'AdamW':
