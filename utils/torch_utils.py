@@ -325,7 +325,6 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
         for p_name, p in v.named_parameters(recurse=0):
             params = True
             print('\n PNAME:', p_name, '\n')
-            print('\n P:', p, '\n')
             if p_name == 'bias':  # bias (no decay)
                 g[2].append(p)
             elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
