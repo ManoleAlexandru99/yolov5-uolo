@@ -320,12 +320,12 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     g = [], [], []  # optimizer parameter groups
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
 
-    for v in model.modules():
+    for m_index, v in enumerate(model.modules()):
         params = False
-        print('\n--------MODULES', v, '----------\n')
+        print('\n--------MODULES',m_index,  v, '----------\n')
         for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
             params = True
-            print('\n PNAME:', p_index, p_name, '\n')
+            print('\n PNAME:', p_name, '\n')
             if p_name == 'bias':  # bias (no decay)
                 g[2].append(p)
             elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
