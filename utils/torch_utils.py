@@ -320,8 +320,10 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     g = [], [], []  # optimizer parameter groups
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
     for v in model.modules():
+        params = False
         print('\n--------MODULES', v, '----------\n')
         for p_name, p in v.named_parameters(recurse=0):
+            params = True
             print('\n PNAME:', p_name, '\n')
             print('\n P:', p, '\n')
             if p_name == 'bias':  # bias (no decay)
@@ -330,7 +332,7 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
                 g[1].append(p)
             else:
                 g[0].append(p)  # weight (with decay)
-        else:
+        if not params:
             print('No params')
 
     if name == 'Adam':
