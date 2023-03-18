@@ -319,6 +319,7 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     # YOLOv5 3-param group optimizer: 0) weights with decay, 1) weights no decay, 2) biases no decay
     g = [], [], []  # optimizer parameter groups
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
+
     for v in model.modules():
         params = False
         print('\n--------MODULES', v, '----------\n')
@@ -333,6 +334,9 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
                 g[0].append(p)  # weight (with decay)
         if not params:
             print('No params')
+
+    for name, module in model.named_children():
+        print('\n-----NAMED:', name, module)
 
     if name == 'Adam':
         optimizer = torch.optim.Adam(g[2], lr=lr, betas=(momentum, 0.999))  # adjust beta1 to momentum
