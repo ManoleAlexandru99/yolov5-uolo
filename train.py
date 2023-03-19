@@ -331,7 +331,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     loss *= 4.
 
             # Backward
-            scaler.scale(loss).backward()
+            scaler.scale(loss).backward(retain_graph=True)
 
             scaler_seg.scale(loss_seg).backward()
 
