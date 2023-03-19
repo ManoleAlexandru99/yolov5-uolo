@@ -342,7 +342,7 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     bn = tuple(v for k, v in nn.__dict__.items() if 'Norm' in k)  # normalization layers, i.e. BatchNorm2d()
 
     for m_index, v in enumerate(model.modules()):
-        print('\n--------MODULES',m_index,  v, '----------\n')
+        # print('\n--------MODULES',m_index,  v, '----------\n')
         '''
         287 - 290 Det heads
         291 - 302 Seg heads
