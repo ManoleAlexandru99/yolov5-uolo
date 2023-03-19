@@ -182,6 +182,7 @@ class ComputeLoss:
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']
         bs = tobj.shape[0]  # batch size
+        print('\n------------Batch sizee:', bs)
         lseg *= self.hyp['seg'] / bs
         # print(f'\n---- Losses: {(lbox.cpu().detach().numpy()[0]): .5f} {(lobj.cpu().detach().numpy()[0]): .5f} {(lcls.cpu().detach().numpy()[0]): .5f} Seg {(lseg.cpu().detach().numpy()[0]): .5f} ------\n')
 
