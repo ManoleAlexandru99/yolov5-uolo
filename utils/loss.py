@@ -188,7 +188,8 @@ class ComputeLoss:
         total_loss = lbox + lobj + lcls
 
         # return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
-        return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
+        # return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
+        return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls, lseg)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
