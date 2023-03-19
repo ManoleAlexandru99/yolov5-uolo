@@ -131,15 +131,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
 
-    '''
-    Extra model print
-    '''
-    # layers = [module for module in model.modules() if not isinstance(module, nn.Sequential)]
-    # for layer in layers:
-    #    print(layer)
-    '''
-    end
-    '''
     amp = check_amp(model)  # check AMP
 
     # Freeze
@@ -172,6 +163,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     else:
         lf = lambda x: (1 - x / epochs) * (1.0 - hyp['lrf']) + hyp['lrf']  # linear
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)  # plot_lr_scheduler(optimizer, scheduler, epochs)
+
+    scheduler_seg =  lr_scheduler.LambdaLR(optimizer_seg, lr_lambda=lf)
 
     # EMA
     ema = ModelEMA(model) if RANK in {-1, 0} else None
@@ -264,7 +257,9 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     maps = np.zeros(nc)  # mAP per class
     results = (0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)
     scheduler.last_epoch = start_epoch - 1  # do not move
+    scheduler_seg.last_epoch = start_epoch - 1
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
+    scaler_seg = torch.cuda.amp.GradScaler(enabled=amp)
     stopper, stop = EarlyStopping(patience=opt.patience), False
     compute_loss = ComputeLoss(model)  # init loss class
     callbacks.run('on_train_start')
@@ -294,6 +289,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
         optimizer.zero_grad()
+        optimizer_seg.zero_grad()
         for i, (imgs, targets, paths, _, segs) in pbar:  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
@@ -311,6 +307,12 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     if 'momentum' in x:
                         x['momentum'] = np.interp(ni, xi, [hyp['warmup_momentum'], hyp['momentum']])
 
+                for j, x in enumerate(optimizer_seg.param_groups):
+                    # bias lr falls from 0.1 to lr0, all other lrs rise from 0.0 to lr0
+                    x['lr'] = np.interp(ni, xi, [hyp['warmup_bias_lr'] if j == 0 else 0.0, x['initial_lr'] * lf(epoch)])
+                    if 'momentum' in x:
+                        x['momentum'] = np.interp(ni, xi, [hyp['warmup_momentum'], hyp['momentum']])
+
             # Multi-scale
             if opt.multi_scale:
                 sz = random.randrange(imgsz * 0.5, imgsz * 1.5 + gs) // gs * gs  # size
@@ -322,7 +324,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             # Forward
             with torch.cuda.amp.autocast(amp):
                 pred = model(imgs)  # forward
-                loss, loss_items = compute_loss(pred, targets.to(device), segs)  # loss scaled by batch_size
+                loss, loss_seg, loss_items = compute_loss(pred, targets.to(device), segs)  # loss scaled by batch_size
                 if RANK != -1:
                     loss *= WORLD_SIZE  # gradient averaged between devices in DDP mode
                 if opt.quad:
@@ -330,6 +332,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
             # Backward
             scaler.scale(loss).backward()
+
+            scaler_seg.scale(loss_seg).backward()
 
             # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
             if ni - last_opt_step >= accumulate:
@@ -341,6 +345,14 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 if ema:
                     ema.update(model)
                 last_opt_step = ni
+
+                scaler_seg.unscale_(optimizer_seg)  # unscale gradients
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
+                scaler_seg.step(optimizer_seg)  # optimizer.step
+                scaler_seg.update()
+                optimizer_seg.zero_grad()
+                if ema:
+                    ema.update(model)
 
             # Log
             if RANK in {-1, 0}:
@@ -357,6 +369,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
         scheduler.step()
+
+        scheduler_seg.step()
 
         if RANK in {-1, 0}:
             # mAP
