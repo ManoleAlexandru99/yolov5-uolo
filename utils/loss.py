@@ -183,12 +183,10 @@ class ComputeLoss:
         lcls *= self.hyp['cls']
         bs = tobj.shape[0]  # batch size
         lseg *= self.hyp['seg'] / bs
-        # print(f'\n---- Losses: {(lbox.cpu().detach().numpy()[0]): .5f} {(lobj.cpu().detach().numpy()[0]): .5f} {(lcls.cpu().detach().numpy()[0]): .5f} Seg {(lseg.cpu().detach().numpy()[0]): .5f} ------\n')
-
 
         # return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
         # return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
-        return (lbox + lobj + lcls) * bs, lseg * bs, torch.cat((lbox, lobj, lcls, lseg)).detach()
+        return (lbox + lobj + lcls) * bs * 0.9, lseg * bs * 0.1, torch.cat((lbox, lobj, lcls, lseg)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
