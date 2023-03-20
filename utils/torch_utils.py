@@ -347,14 +347,14 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
         287 - 290 Det heads
         291 - 302 Seg heads
         '''
-        # if m_index < 291 or m_index > 302: # DETECTION Optimizer
-        for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
-            if p_name == 'bias':  # bias (no decay)
-                g_det[2].append(p)
-            elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
-                g_det[1].append(p)
-            else:
-                g_det[0].append(p)  # weight (with decay)
+        if m_index < 291 or m_index > 302: # DETECTION Optimizer
+            for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
+                if p_name == 'bias':  # bias (no decay)
+                    g_det[2].append(p)
+                elif p_name == 'weight' and isinstance(v, bn):  # weight (no decay)
+                    g_det[1].append(p)
+                else:
+                    g_det[0].append(p)  # weight (with decay)
 
         if m_index < 287 or m_index > 290: # SEGMENTATION Optimizer
             for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
