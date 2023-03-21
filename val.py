@@ -73,6 +73,8 @@ def compute_seg_iou(pred, target, n_classes=2):
     ious = []
     pred = pred.view(-1)
     target = target.view(-1)
+    print(target)
+    print(pred)
 
     # Ignore IoU for background class ("0")
     for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
