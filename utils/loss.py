@@ -163,7 +163,7 @@ class ComputeLoss:
                 # Mask Loss
                 # print('\n-----PRED MASK', pred_mask.shape, '-------\n')
                 # print('\n-----REAL MASK', seg_masks.shape, '-------\n')
-                seg_loss = nn.BCELoss(pred_mask, seg_masks, reduction='none').mean()
+                seg_loss = nn.BCELoss(pred_mask, seg_masks).mean()
                 lseg += seg_loss
 
                 # Append targets to text file
