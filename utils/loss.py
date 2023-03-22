@@ -165,6 +165,8 @@ class ComputeLoss:
                 # print('\n-----REAL MASK', seg_masks.shape, '-------\n')
                 print('SEG MASK', seg_masks)
                 print('PRED MASK', pred_mask)
+                print(torch.all(pred_mask > 0))
+                print(torch.all(seg_masks > 0))
                 seg_loss = nn.functional.binary_cross_entropy(pred_mask, seg_masks, reduce=False, reduction='none').mean()
                 lseg += seg_loss
 
