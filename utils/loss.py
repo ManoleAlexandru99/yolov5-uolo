@@ -163,8 +163,8 @@ class ComputeLoss:
                 # Mask Loss
                 # print('\n-----PRED MASK', pred_mask.shape, '-------\n')
                 # print('\n-----REAL MASK', seg_masks.shape, '-------\n')
-                print('PRED VALID: ', torch.all(pred_mask > 0))
-                print('SEG MASK VALID: ', torch.all(seg_masks > 0))
+                print('\n----------- PRED VALID: ', torch.all(pred_mask > 0), '-----------------\n')
+                print('\n----------- SEG MASK VALID: ', torch.all(seg_masks > 0), '-----------------\n')
                 seg_loss = nn.functional.binary_cross_entropy(pred_mask, seg_masks, reduce=False, reduction='none').mean()
                 lseg += seg_loss
 

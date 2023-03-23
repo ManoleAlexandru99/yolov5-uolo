@@ -294,8 +294,11 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
+            if not torch.all(segs >= 0):
+                print('Pre 0-1 Normalization - SEG MASK NOT VALID')
             segs = segs.to(device, non_blocking=True).float() / 255
-
+            if not torch.all(segs >= 0):
+                print('Post 0-1 Normalization - SEG MASK NOT VALID')
             # Warmup
             if ni <= nw:
                 xi = [0, nw]  # x interp
