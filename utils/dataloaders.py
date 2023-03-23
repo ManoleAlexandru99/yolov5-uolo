@@ -734,6 +734,8 @@ class LoadImagesAndLabels(Dataset):
         seg = cv2.cvtColor(seg, cv2.COLOR_BGR2GRAY)
         seg = np.expand_dims(seg, axis=0)
         seg = np.ascontiguousarray(seg)
+        if not np.all((seg >= 0)):
+            print('\n POST FLATTEN MASK ERROR \n')
 
         return torch.from_numpy(img), labels_out, self.im_files[index], shapes, torch.from_numpy(seg)
 
