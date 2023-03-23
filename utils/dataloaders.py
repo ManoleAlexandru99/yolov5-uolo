@@ -910,8 +910,10 @@ class LoadImagesAndLabels(Dataset):
     @staticmethod
     def collate_fn(batch):
         im, label, path, shapes, seg = zip(*batch)  # transposed
-        if not np.all((seg >= 0)):
-            print('\n COLLATE PRE STACK MASK ERROR \n')
+        print('Seg type: ', type(seg))
+        print('Seg len: ', len(seg))
+        print('Seg type 0: ', type(seg[0]))
+        print('Seg type 1: ', type(seg[1]))
         for i, lb in enumerate(label):
             lb[:, 0] = i  # add target image index for build_targets()
         torch_seg = torch.stack(seg, 0)
