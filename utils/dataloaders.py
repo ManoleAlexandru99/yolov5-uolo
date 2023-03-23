@@ -701,7 +701,8 @@ class LoadImagesAndLabels(Dataset):
 
             # HSV color-space
             augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
-            print('\n---Pre Aug', np.all((seg >= 0)), '-----\n')
+            if not np.all((seg >= 0)):
+                print('\n PRE AUGMENTATION MASK ERROR \n')
             # Flip up-down
             if random.random() < hyp['flipud']:
                 img = np.flipud(img)
@@ -727,7 +728,8 @@ class LoadImagesAndLabels(Dataset):
         # Convert
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
-        print('\n---Post  Aug', np.all((seg >= 0)), '-----\n')
+        if not np.all((seg >= 0)):
+            print('\n POST AUGMENTATION MASK ERROR \n')
         # Convert Mask
         seg = cv2.cvtColor(seg, cv2.COLOR_BGR2GRAY)
         seg = np.expand_dims(seg, axis=0)
@@ -909,7 +911,8 @@ class LoadImagesAndLabels(Dataset):
         for i, lb in enumerate(label):
             lb[:, 0] = i  # add target image index for build_targets()
         torch_seg = torch.stack(seg, 0)
-        print('Dataloader tensor', torch.all(torch_seg > 0))
+        if not torch.all(torch_seg > 0):
+            print('Collate FN - SEG MASK NOT VALID')
         return torch.stack(im, 0), torch.cat(label, 0), path, shapes, torch_seg
 
     @staticmethod
