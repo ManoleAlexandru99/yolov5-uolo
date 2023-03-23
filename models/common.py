@@ -856,7 +856,7 @@ class Seg(nn.Module):
         self.cv2 = Conv(32, 64, k=3)
         self.cv3 = Conv(64, 1)
         self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         # print('----entry shape', x.shape, '---\n')
@@ -869,7 +869,7 @@ class Seg(nn.Module):
         x = self.relu(x)
         x = self.cv3(x)
         # print('----out shape', x.shape, '---\n')
-        x = self.sigmoid(x)
+        # x = self.sigmoid(x)
         return x
 
 

@@ -71,6 +71,7 @@ def save_one_json(predn, jdict, path, class_map):
 
 def compute_seg_iou(pred, target, n_classes=2):
     ious = []
+    pred = torch.sigmoid(pred)
     pred = pred.view(-1)
     target = target.view(-1)
     print(target)
