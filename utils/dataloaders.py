@@ -674,9 +674,7 @@ class LoadImagesAndLabels(Dataset):
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
             mask_shape = [shape[0] // 2, shape[1] // 2] if self.rect else self.img_size // 2
-            print('\n---Seg Mask before letterbox', np.all((seg >= 0)), '-----\n')
             seg, _, _ = letterbox(seg, mask_shape, auto=False, scaleup=self.augment, color=(0, 0, 0))
-            print('\n---Seg Mask after letterbox', np.all((seg >= 0)), '-----\n')
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
             labels = self.labels[index].copy()
@@ -703,7 +701,7 @@ class LoadImagesAndLabels(Dataset):
 
             # HSV color-space
             augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
-
+            print('\n---Pre Aug', np.all((seg >= 0)), '-----\n')
             # Flip up-down
             if random.random() < hyp['flipud']:
                 img = np.flipud(img)
@@ -729,7 +727,7 @@ class LoadImagesAndLabels(Dataset):
         # Convert
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
-
+        print('\n---Post  Aug', np.all((seg >= 0)), '-----\n')
         # Convert Mask
         seg = cv2.cvtColor(seg, cv2.COLOR_BGR2GRAY)
         seg = np.expand_dims(seg, axis=0)
