@@ -355,8 +355,8 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
                     g_det[1].append(p)
                 else:
                     g_det[0].append(p)  # weight (with decay)
-
-        if m_index < 287 or m_index > 290: # SEGMENTATION Optimizer
+        else:
+        # if m_index < 287 or m_index > 290: # SEGMENTATION Optimizer
             for p_index, (p_name, p) in enumerate(v.named_parameters(recurse=0)):
                 if p_name == 'bias':  # bias (no decay)
                     g_seg[2].append(p)
@@ -366,7 +366,7 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
                     g_seg[0].append(p)  # weight (with decay)
 
     det_optimizer = get_optimizer(name, lr, momentum, decay, g_det)
-    seg_optimizer = get_optimizer(name, lr, momentum, decay, g_seg)
+    seg_optimizer = get_optimizer(name, lr * 5, momentum, decay, g_seg)
     return det_optimizer, seg_optimizer
 
 
