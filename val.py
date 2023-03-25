@@ -237,7 +237,7 @@ def run(
 
         ious = compute_seg_iou(pred_mask, segs)
         # print('\n------------ IoU: ', ious, '------------\n')
-        iou += ious[0]
+        iou += (ious[0] + ious[1]) / 2
 
         # Loss
         if compute_loss:
@@ -310,6 +310,7 @@ def run(
 
     # Print results
     pf = '%22s' + '%11i' * 2 + '%11.3g' * 5  # print format
+    iou = iou / len(pbar)
     LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map, iou))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING ⚠️ no labels found in {task} set, can not compute metrics without labels')
