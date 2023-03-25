@@ -572,8 +572,6 @@ class LoadImagesAndLabels(Dataset):
         self.ims = [None] * n
         self.npy_files = [Path(f).with_suffix('.npy') for f in self.im_files]
 
-        print('\n--------CACHE IMAGES:', cache_images, '-----------\n')
-
         cache_images = False
         if cache_images:
             b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes

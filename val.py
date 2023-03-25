@@ -80,7 +80,7 @@ def compute_seg_iou(pred, target, n_classes=2):
     # print(pred)
 
     # Ignore IoU for background class ("0")
-    for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
+    for cls in range(0, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
         pred_inds = pred == cls
         target_inds = target == cls
         intersection = (pred_inds[target_inds]).long().sum().data.cpu()  # Cast to long to prevent overflows
@@ -210,9 +210,10 @@ def run(
     if isinstance(names, (list, tuple)):  # old format
         names = dict(enumerate(names))
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
-    s = ('%22s' + '%11s' * 7) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg IoU')
+    s = ('%22s' + '%11s' * 7) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg mIoU', 'rail IoU')
     tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     iou = 0.0
+    rail_iou = 0.0
     dt = Profile(), Profile(), Profile()  # profiling times
     loss = torch.zeros(4, device=device)
     jdict, stats, ap, ap_class = [], [], [], []
@@ -238,6 +239,7 @@ def run(
         ious = compute_seg_iou(pred_mask, segs)
         # print('\n------------ IoU: ', ious, '------------\n')
         iou += (ious[0] + ious[1]) / 2
+        rail_iou = ious[1]
 
         # Loss
         if compute_loss:
@@ -309,9 +311,10 @@ def run(
     nt = np.bincount(stats[3].astype(int), minlength=nc)  # number of targets per class
 
     # Print results
-    pf = '%22s' + '%11i' * 2 + '%11.3g' * 5  # print format
+    pf = '%22s' + '%11i' * 2 + '%11.3g' * 6  # print format
     iou = iou / len(pbar)
-    LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map, iou))
+    rail_iou = rail_iou / len(pbar)
+    LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map, iou, rail_iou))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING ⚠️ no labels found in {task} set, can not compute metrics without labels')
 
