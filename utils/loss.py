@@ -163,12 +163,7 @@ class ComputeLoss:
                 # Mask Loss
                 # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
                 # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
-                loss_weight = torch.tensor([1, 1.5])
-                print(pred_mask.shape)
-                print(seg_masks.shape)
-                seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none')
-                print(seg_loss)
-                seg_loss = seg_loss.mean()
+                seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
                 lseg += seg_loss
 
                 # Append targets to text file
