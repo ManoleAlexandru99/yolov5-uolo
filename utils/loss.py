@@ -164,6 +164,8 @@ class ComputeLoss:
                 # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
                 # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
                 loss_weight = torch.tensor([1, 1.5])
+                print(pred_mask.shape)
+                print(seg_mask.shape)
                 seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none', weight=loss_weight).mean()
                 lseg += seg_loss
 
@@ -186,7 +188,7 @@ class ComputeLoss:
 
         # return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
         # return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
-        return (lbox + lobj + lcls) * bs * 1, lseg * bs * 1, torch.cat((lbox, lobj, lcls, lseg)).detach()
+        return (lbox + lobj + lcls) * bs * 0, lseg * bs * 1, torch.cat((lbox, lobj, lcls, lseg)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
