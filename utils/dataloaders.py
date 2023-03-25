@@ -570,10 +570,9 @@ class LoadImagesAndLabels(Dataset):
         if cache_images == 'ram' and not self.check_cache_ram(prefix=prefix):
             cache_images = False
         self.ims = [None] * n
-        self.segs = [None] * n
         self.npy_files = [Path(f).with_suffix('.npy') for f in self.im_files]
 
-        # cache_images = False
+        cache_images = False
         if cache_images:
             b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
             b2, gb2 = 0, 1 << 30
@@ -585,9 +584,9 @@ class LoadImagesAndLabels(Dataset):
                 if cache_images == 'disk':
                     b += self.npy_files[i].stat().st_size
                 else:  # 'ram'
-                    self.ims[i], self.im_hw0[i], self.im_hw[i], self.segs[i] = x  # im, hw_orig, hw_resized = load_image(self, i)
+                    self.ims[i], self.im_hw0[i], self.im_hw[i], seg = x  # im, hw_orig, hw_resized = load_image(self, i)
                     b += self.ims[i].nbytes
-                    b2 += self.segs[i].nbytes
+                    b2 += seg.nbytes
                 pbar.desc = f'{prefix}Caching images ({b / gb:.1f}GB {cache_images})'
             pbar.close()
 
@@ -744,7 +743,8 @@ class LoadImagesAndLabels(Dataset):
 
     def load_image(self, i):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
-        im, f, fn, seg = self.ims[i], self.im_files[i], self.npy_files[i], self.segs[i]
+        im, f, fn = self.ims[i], self.im_files[i], self.npy_files[i],
+        seg = None
         if im is None:  # not cached in RAM
             if fn.exists():  # load npy
                 im = np.load(fn)
@@ -766,7 +766,7 @@ class LoadImagesAndLabels(Dataset):
                 im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
                 seg = cv2.resize(seg, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
             return im, (h0, w0), im.shape[:2], seg  # im, hw_original, hw_resized
-        return self.ims[i], self.im_hw0[i], self.im_hw[i], self.segs[i]  # im, hw_original, hw_resized
+        return self.ims[i], self.im_hw0[i], self.im_hw[i], seg  # im, hw_original, hw_resized
 
     def cache_images_to_disk(self, i):
         # Saves an image as an *.npy file for faster loading
