@@ -366,7 +366,7 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
                     g_seg[0].append(p)  # weight (with decay)
 
     det_optimizer = get_optimizer(name, lr, momentum, decay, g_det)
-    seg_optimizer = get_optimizer(name, lr * 5, momentum, decay, g_seg)
+    seg_optimizer = get_optimizer(name, lr, momentum, decay, g_seg)
     return det_optimizer, seg_optimizer
 
 
