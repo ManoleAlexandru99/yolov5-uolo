@@ -745,7 +745,7 @@ class LoadImagesAndLabels(Dataset):
 
     def load_image(self, i):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
-        im, f, fn, seg = self.ims[i], self.im_files[i], self.npy_files[i], self.segs[i]
+        im, f, fn, seg = self.ims[i], self.im_files[i], self.npy_files[i], None
         if im is None:  # not cached in RAM
             if fn.exists():  # load npy
                 im = np.load(fn)
@@ -767,7 +767,7 @@ class LoadImagesAndLabels(Dataset):
                 im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
                 seg = cv2.resize(seg, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
             return im, (h0, w0), im.shape[:2], seg  # im, hw_original, hw_resized
-        return self.ims[i], self.im_hw0[i], self.im_hw[i], self.segs[i]  # im, hw_original, hw_resized
+        return self.ims[i], self.im_hw0[i], self.im_hw[i], seg  # im, hw_original, hw_resized
 
     def cache_images_to_disk(self, i):
         # Saves an image as an *.npy file for faster loading
