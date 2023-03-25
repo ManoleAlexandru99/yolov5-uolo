@@ -210,7 +210,7 @@ def run(
     if isinstance(names, (list, tuple)):  # old format
         names = dict(enumerate(names))
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
-    s = ('%22s' + '%11s' * 7) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg mIoU', 'rail IoU')
+    s = ('%22s' + '%11s' * 8) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg mIoU', 'rail IoU')
     tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     iou = 0.0
     rail_iou = 0.0
