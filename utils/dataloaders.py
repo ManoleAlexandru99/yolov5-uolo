@@ -599,7 +599,7 @@ class LoadImagesAndLabels(Dataset):
         for _ in range(n):
             im = cv2.imread(random.choice(self.im_files))  # sample image
             ratio = self.img_size / max(im.shape[0], im.shape[1])  # max(h, w)  # ratio
-            b += (im.nbytes * ratio ** 2) * 2 # ADDED *2 for mask - DELETE THIS IN CASE OF EMERGENCY
+            b += im.nbytes * ratio ** 2
         mem_required = b * self.n / n  # GB required to cache dataset into RAM
         mem = psutil.virtual_memory()
         cache = mem_required * (1 + safety_margin) < mem.available  # to cache or not to cache, that is the question
