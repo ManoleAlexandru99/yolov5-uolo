@@ -570,13 +570,13 @@ class LoadImagesAndLabels(Dataset):
         if cache_images == 'ram' and not self.check_cache_ram(prefix=prefix):
             cache_images = False
         self.ims = [None] * n
-        # self.segs = [None] * n
+        self.segs = [None] * n
         self.npy_files = [Path(f).with_suffix('.npy') for f in self.im_files]
 
         cache_images = False
         if cache_images:
             b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
-            # b2, gb2 = 0, 1 << 30
+            b2, gb2 = 0, 1 << 30
             self.im_hw0, self.im_hw = [None] * n, [None] * n
             fcn = self.cache_images_to_disk if cache_images == 'disk' else self.load_image
             results = ThreadPool(NUM_THREADS).imap(fcn, range(n))
@@ -585,10 +585,9 @@ class LoadImagesAndLabels(Dataset):
                 if cache_images == 'disk':
                     b += self.npy_files[i].stat().st_size
                 else:  # 'ram'
-                    # self.ims[i], self.im_hw0[i], self.im_hw[i], self.segs[i] = x  # im, hw_orig, hw_resized = load_image(self, i)
-                    self.ims[i], self.im_hw0[i], self.im_hw[i], segs = x
+                    self.ims[i], self.im_hw0[i], self.im_hw[i], self.segs[i] = x  # im, hw_orig, hw_resized = load_image(self, i)
                     b += self.ims[i].nbytes
-                    # b2 += self.segs[i].nbytes
+                    b2 += self.segs[i].nbytes
                 pbar.desc = f'{prefix}Caching images ({b / gb:.1f}GB {cache_images})'
             pbar.close()
 
