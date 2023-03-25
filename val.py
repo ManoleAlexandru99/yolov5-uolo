@@ -314,6 +314,7 @@ def run(
     pf = '%22s' + '%11i' * 2 + '%11.3g' * 6  # print format
     iou = iou / len(pbar)
     rail_iou = rail_iou / len(pbar)
+    print('\n----- RAIL_IOU:', rail_iou, '-------\n')
     LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map, iou, rail_iou))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING ⚠️ no labels found in {task} set, can not compute metrics without labels')
