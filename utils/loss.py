@@ -173,14 +173,14 @@ class ComputeLoss:
         # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
         # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
         seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
-        print('SEG_LOSS', seg_loss)
+        # print('SEG_LOSS', seg_loss)
         if torch.isnan(seg_loss):
             print(pred_mask)
             print('\nLOSS IS NAN\n')
             assert False
-        if not torch.all(torch.isnan(torch.cat((lbox, lobj, lcls)))):
-            print(torch.cat((lbox, lobj, lcls)))
-            assert False
+        # if not torch.all(torch.isnan(torch.cat((lbox, lobj, lcls)))):
+        #     print(torch.cat((lbox, lobj, lcls)))
+        #    assert False
 
         lseg += seg_loss
 
