@@ -372,7 +372,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
-        print('\n------LR', lr)
+        # print('\n------LR', lr)
         scheduler.step()
 
         scheduler_seg.step()
