@@ -87,6 +87,11 @@ class QFocalLoss(nn.Module):
         else:  # 'none'
             return loss
 
+def weighted_bce(y_pred, y_true, BETA=2):
+    weights = (y_true * (BETA - 1)) + 1
+    bce = nn.BCELoss(reduction='none')(y_pred, y_true)
+    wbce = torch.mean(bce * weights)
+    return wbce
 
 class ComputeLoss:
     sort_obj_iou = False
@@ -172,7 +177,8 @@ class ComputeLoss:
         # Mask Loss
         # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
         # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
-        seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+        # seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+        seg_loss = weighted_bce(pred_mask, seg_masks)
         # print('SEG_LOSS', seg_loss)
         if torch.isnan(seg_loss):
             print(pred_mask)
