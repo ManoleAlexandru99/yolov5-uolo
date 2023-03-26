@@ -172,9 +172,10 @@ class ComputeLoss:
         # Mask Loss
         # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
         # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
-        lseg = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+        seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+        lseg += seg_loss
         print('LSEG', lseg)
-        
+
         if self.autobalance:
             self.balance = [x / self.balance[self.ssi] for x in self.balance]
         lbox *= self.hyp['box']
