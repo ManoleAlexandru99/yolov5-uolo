@@ -160,12 +160,6 @@ class ComputeLoss:
                     t[range(n), tcls[i]] = self.cp
                     lcls += self.BCEcls(pcls, t)  # BCE
 
-                # Mask Loss
-                # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
-                # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
-                seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').sum()
-                lseg += seg_loss
-
                 # Append targets to text file
                 # with open('targets.txt', 'a') as file:
                 #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
@@ -175,13 +169,20 @@ class ComputeLoss:
             if self.autobalance:
                 self.balance[i] = self.balance[i] * 0.9999 + 0.0001 / obji.detach().item()
 
+        # Mask Loss
+        # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
+        # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
+        lseg = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+        print('LSEG', lseg)
+        
         if self.autobalance:
             self.balance = [x / self.balance[self.ssi] for x in self.balance]
         lbox *= self.hyp['box']
         lobj *= self.hyp['obj']
         lcls *= self.hyp['cls']
         bs = tobj.shape[0]  # batch size
-        lseg *= self.hyp['seg'] / bs
+        print('SEG:', self.hyp['seg'])
+        lseg *= self.hyp['seg']
 
         # return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
         # return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
