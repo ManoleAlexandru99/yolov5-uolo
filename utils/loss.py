@@ -89,7 +89,7 @@ class QFocalLoss(nn.Module):
 
 def weighted_bce(y_pred, y_true, BETA=2):
     weights = (y_true * (BETA - 1)) + 1
-    bce = nn.BCELoss(reduction='none')(y_pred, y_true)
+    bce = nn.BCEWithLogitsLoss(reduction='none')(y_pred, y_true)
     wbce = torch.mean(bce * weights)
     return wbce
 
