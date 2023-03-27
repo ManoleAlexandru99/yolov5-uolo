@@ -178,7 +178,11 @@ class ComputeLoss:
         # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
         # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
         # seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
-        seg_loss = weighted_bce(pred_mask, seg_masks)
+
+        # seg_loss = weighted_bce(pred_mask, seg_masks)
+        focal_loss = FocalLoss(nn.BCEWithLogitsLoss(reduction="none"))
+        seg_loss = focal_loss(pred_mask, seg_masks)
+
         # print('SEG_LOSS', seg_loss)
         if torch.isnan(seg_loss):
             print(pred_mask)
