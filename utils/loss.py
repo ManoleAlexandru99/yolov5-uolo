@@ -43,7 +43,7 @@ class FocalLoss(nn.Module):
         self.loss_fcn.reduction = 'none'  # required to apply FL to each element
 
     def forward(self, pred, true):
-        loss = self.loss_fcn(pred, true)
+        loss = weighted_bce(pred, true, BETA=37)# self.loss_fcn(pred, true)
         # p_t = torch.exp(-loss)
         # loss *= self.alpha * (1.000001 - p_t) ** self.gamma  # non-zero power for gradient stability
 
@@ -180,8 +180,8 @@ class ComputeLoss:
         # seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
 
         # seg_loss = weighted_bce(pred_mask, seg_masks)
-        focal_loss = FocalLoss(nn.BCEWithLogitsLoss(reduction="none"))
-        seg_loss = focal_loss(pred_mask, seg_masks)
+        focal_loss = FocalLoss(nn.BCEWithLogitsLoss(reduction="none"), gamma=1.5, alpha=0.25)
+        seg_loss = focal_loss(pred_mask, seg_masks).mean()
 
         # print('SEG_LOSS', seg_loss)
         if torch.isnan(seg_loss):
