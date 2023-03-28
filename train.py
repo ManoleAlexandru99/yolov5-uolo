@@ -76,7 +76,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # Directories
     w = save_dir / 'weights'  # weights dir
     (w.parent if evolve else w).mkdir(parents=True, exist_ok=True)  # make dir
-    last, best = w / 'last.pt', w / 'best.pt'
+    last, best, best_seg = w / 'last.pt', w / 'best.pt', w / 'best_seg.pt'
 
     # Hyperparameters
     if isinstance(hyp, str):
@@ -397,6 +397,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                                 compute_loss=compute_loss)
 
             # Update best mAP
+            print('\n----Results:', results)
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
