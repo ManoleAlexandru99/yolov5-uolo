@@ -43,7 +43,7 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, Profile, check_dataset, chec
                            check_yaml, coco80_to_coco91_class, colorstr, increment_path, non_max_suppression,
                            print_args, scale_boxes, xywh2xyxy, xyxy2xywh)
 from utils.metrics import ConfusionMatrix, ap_per_class, box_iou
-from utils.plots import output_to_target, plot_images, plot_val_study
+from utils.plots import output_to_target, plot_images, plot_val_study, plot_masks
 from utils.torch_utils import select_device, smart_inference_mode
 
 
@@ -299,6 +299,7 @@ def run(
         if plots and batch_i < 3:
             plot_images(im, targets, paths, save_dir / f'val_batch{batch_i}_labels.jpg', names)  # labels
             plot_images(im, output_to_target(preds), paths, save_dir / f'val_batch{batch_i}_pred.jpg', names)  # pred
+            plot_masks(pred_mask,  save_dir / f'val_batch{batch_i}_mask.jpg')
 
         callbacks.run('on_val_batch_end', batch_i, im, targets, paths, shapes, preds, pred_mask)
 

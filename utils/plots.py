@@ -225,6 +225,30 @@ def output_to_target(output, max_det=300):
         targets.append(torch.cat((j, cls, xyxy2xywh(box), conf), 1))
     return torch.cat(targets, 0).numpy()
 
+def seg_pred_to_image(seg_mask):
+    seg_mask = torch.sigmoid(seg_mask)
+    seg_mask[seg_mask < 0.5] = 0
+    seg_mask[seg_mask >= 0.5] = 1
+    numpy_pred = seg_mask.cpu().numpy()
+    numpy_pred = numpy_pred[0][0]
+    numpy_pred = numpy_pred * 255
+    return numpy_pred
+
+@threaded
+def plot_masks(seg_preds, fname='mask.jpg'):
+    max_subplots = 16  # max image subplots, i.e. 4x4
+    bs = seg_preds.shape[0]
+    ns = np.ceil(bs ** 0.5)  # number of subplots (square)
+
+    mosaic = np.full((int(ns * 320), int(ns * 320)), 255, dtype=np.uint8)  # init
+    for i, seg_pred in enumerate(seg_preds):
+        mask = seg_pred_to_image(seg_pred)
+        h, w = mask.shape
+        if i == max_subplots:  # if last batch has fewer images than we expect
+            break
+        x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin)
+        mosaic[y:y + h, x:x + w] = mask
+    cv2.imwrite(fname, mosaic)
 
 @threaded
 def plot_images(images, targets, paths=None, fname='images.jpg', names=None):
@@ -488,7 +512,7 @@ def plot_evolve(evolve_csv='path/to/evolve.csv'):  # from utils.plots import *; 
 def plot_results(file='path/to/results.csv', dir=''):
     # Plot training results.csv. Usage: from utils.plots import *; plot_results('path/to/results.csv')
     save_dir = Path(file).parent if file else Path(dir)
-    fig, ax = plt.subplots(2, 5, figsize=(12, 6), tight_layout=True)
+    fig, ax = plt.subplots(2, 7, figsize=(12, 6), tight_layout=True)
     ax = ax.ravel()
     files = list(save_dir.glob('results*.csv'))
     assert len(files), f'No results.csv files found in {save_dir.resolve()}, nothing to plot.'
@@ -497,7 +521,7 @@ def plot_results(file='path/to/results.csv', dir=''):
             data = pd.read_csv(f)
             s = [x.strip() for x in data.columns]
             x = data.values[:, 0]
-            for i, j in enumerate([1, 2, 3, 4, 5, 8, 9, 10, 6, 7]):
+            for i, j in enumerate([1, 2, 3, 4, 11, 12, 13, 14, 5, 8, 9, 10, 6, 7]):
                 y = data.values[:, j].astype('float')
                 # y[y == 0] = np.nan  # don't show zero values
                 ax[i].plot(x, y, marker='.', label=f.stem, linewidth=2, markersize=8)
