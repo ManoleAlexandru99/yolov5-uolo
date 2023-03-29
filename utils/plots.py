@@ -235,7 +235,7 @@ def seg_pred_to_image(seg_mask):
     return numpy_pred
 
 @threaded
-def plot_masks(segs, seg_preds, fname='mask.jpg'):
+def plot_masks(segs, seg_preds, fname='mask.jpg', fname_real='real.jpg'):
     max_subplots = 16  # max image subplots, i.e. 4x4
     bs, _, h, w = segs.shape  # batch size, _, height, width
     ns = np.ceil(bs ** 0.5)  # number of subplots (square)
@@ -256,7 +256,6 @@ def plot_masks(segs, seg_preds, fname='mask.jpg'):
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin)
         mosaic_real[y:y + h, x:x + w] = seg
-    fname_real = fname[:-4] + '_real.jpg'
 
     cv2.imwrite(fname, mosaic)
     cv2.imwrite(fname_real, mosaic_real)
