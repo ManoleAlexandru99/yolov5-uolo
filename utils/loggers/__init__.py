@@ -67,20 +67,22 @@ class Loggers():
         self.keys = [
             'train/box_loss',
             'train/obj_loss',
-            'train/cls_loss',  # train loss
-            'train/seg_loss',
+            'train/cls_loss',
+            'train/seg_loss',   # train loss
             'metrics/precision',
             'metrics/recall',
             'metrics/mAP_0.5',
-            'metrics/mAP_0.5:0.95',  # metrics
+            'metrics/mAP_0.5:0.95',
+            'metrics/mIoU',
+            'metrics/railIoU',  # metrics
             'val/box_loss',
             'val/obj_loss',
-            'val/cls_loss',  # val loss
-            'val/seg_loss',
+            'val/cls_loss',
+            'val/seg_loss',  # val loss
             'x/lr0',
             'x/lr1',
             'x/lr2']  # params
-        self.best_keys = ['best/epoch', 'best/precision', 'best/recall', 'best/mAP_0.5', 'best/mAP_0.5:0.95']
+        self.best_keys = ['best/epoch', 'best/precision', 'best/recall', 'best/mAP_0.5', 'best/mAP_0.5:0.95', 'best/mIoU', 'best/railIoU']
         for k in LOGGERS:
             setattr(self, k, None)  # init empty logger dictionary
         self.csv = True  # always log to csv
@@ -166,7 +168,7 @@ class Loggers():
             if self.comet_logger:
                 self.comet_logger.on_pretrain_routine_end(paths)
 
-    def on_train_batch_end(self, model, ni, imgs, targets, paths, vals):
+    def on_train_batch_end(self, model, ni, imgs, targets, paths, vals):  #ADD SEG MASK HERE
         log_dict = dict(zip(self.keys[:3], vals))
         # Callback runs on train batch end
         # ni: number integrated batches (since train start)
@@ -221,7 +223,7 @@ class Loggers():
         if self.comet_logger:
             self.comet_logger.on_val_end(nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix)
 
-    def on_fit_epoch_end(self, vals, epoch, best_fitness, fi):
+    def on_fit_epoch_end(self, vals, epoch, best_fitness, fi, best_fitness_seg, fi_seg):
         # Callback runs at the end of each fit (train+val) epoch
         x = dict(zip(self.keys, vals))
         if self.csv:

@@ -69,11 +69,11 @@ def save_one_json(predn, jdict, path, class_map):
             'bbox': [round(x, 3) for x in b],
             'score': round(p[4], 5)})
 
-def compute_seg_iou(pred, target, n_classes=2):
+def compute_seg_iou(pred, target, n_classes=2, threshold=0.5):
     ious = []
     pred = torch.sigmoid(pred)
-    pred[pred < 0.5] = 0
-    pred[pred >= 0.5] = 1
+    pred[pred < threshold] = 0
+    pred[pred >= threshold] = 1
     pred = pred.view(-1)
     target = target.view(-1)
     # print(target)
@@ -368,7 +368,7 @@ def run(
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t
+    return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist(), iou, rail_iou), maps, t
 
 
 def parse_opt():

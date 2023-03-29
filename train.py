@@ -56,7 +56,7 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, check_amp, check_dataset, ch
 from utils.loggers import Loggers
 from utils.loggers.comet.comet_utils import check_comet_resume
 from utils.loss import ComputeLoss
-from utils.metrics import fitness
+from utils.metrics import fitness, seg_fitness
 from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
@@ -171,6 +171,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
     # Resume
     best_fitness, start_epoch = 0.0, 0
+    best_fitness_seg = 0.0
     if pretrained:
         if resume:
             best_fitness, start_epoch, epochs = smart_resume(ckpt, optimizer, ema, weights, epochs, resume)
@@ -255,7 +256,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # nw = min(nw, (epochs - start_epoch) / 2 * nb)  # limit warmup to < 1/2 of training
     last_opt_step = -1
     maps = np.zeros(nc)  # mAP per class
-    results = (0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)
+    results = (0, 0, 0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls), mIoU, railIoU
     scheduler.last_epoch = start_epoch - 1  # do not move
     scheduler_seg.last_epoch = start_epoch - 1
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
@@ -397,13 +398,15 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                                 compute_loss=compute_loss)
 
             # Update best mAP
-            print('\n----Results:', results)
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
+            fi_seg = seg_fitness(np.array(results).reshape(1, -1))
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
+            if fi_seg > best_fitness_seg:
+                best_fitness_seg = fi_seg
             log_vals = list(mloss) + list(results) + lr
-            callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
+            callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi, best_fitness_seg, fi_seg)
 
             # Save model
             if (not nosave) or (final_epoch and not evolve):  # if save
@@ -418,13 +421,27 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     'git': GIT_INFO,  # {remote, branch, commit} if a git repo
                     'date': datetime.now().isoformat()}
 
+                ckpt_seg = {
+                    'epoch': epoch,
+                    'best_fitness': best_fitness_seg,
+                    'model': deepcopy(de_parallel(model)).half(),
+                    'ema': deepcopy(ema.ema).half(),
+                    'updates': ema.updates,
+                    'optimizer': optimizer_seg.state_dict(),
+                    'opt': vars(opt),
+                    'git': GIT_INFO,  # {remote, branch, commit} if a git repo
+                    'date': datetime.now().isoformat()}
+
                 # Save last, best and delete
                 torch.save(ckpt, last)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
+                if best_fitness_seg == fi_seg:
+                    torch.save(ckpt_seg, best_seg)
                 if opt.save_period > 0 and epoch % opt.save_period == 0:
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                 del ckpt
+                del ckpt_seg
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
         # EarlyStopping
