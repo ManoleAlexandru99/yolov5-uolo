@@ -20,8 +20,8 @@ def fitness(x):
     return (x[:, :4] * w).sum(1)
 
 def seg_fitness(x):
-    w = [0.2, 0.8] # weights for [mIoU, railIoU]
-    return (x[:, 2:] * w).sum(1)
+    w = [0.2, 0.8]  # weights for [mIoU, railIoU]
+    return (x[:, 8:] * w).sum(1)
 
 
 def smooth(y, f=0.05):

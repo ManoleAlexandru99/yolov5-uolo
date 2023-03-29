@@ -207,9 +207,10 @@ class Loggers():
         if self.clearml:
             self.clearml.log_image_with_boxes(path, pred, names, im)
 
-    def on_val_batch_end(self, batch_i, im, targets, paths, shapes, out):
+    def on_val_batch_end(self, batch_i, im, targets, paths, shapes, out, out_seg):
         if self.comet_logger:
-            self.comet_logger.on_val_batch_end(batch_i, im, targets, paths, shapes, out)
+            print('\n------- COMET LOGGER VAL IMAGES ---------- \n')
+            self.comet_logger.on_val_batch_end(batch_i, im, targets, paths, shapes, out, out_seg)
 
     def on_val_end(self, nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix):
         # Callback runs on val end
