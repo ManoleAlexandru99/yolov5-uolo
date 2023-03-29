@@ -250,6 +250,8 @@ def plot_masks(segs, seg_preds, fname='mask.jpg'):
 
     mosaic_real = np.full((int(ns * h), int(ns * w)), 255, dtype=np.uint8)  # init
     for i, seg in enumerate(segs):
+        seg = seg.cpu().numpy()
+        seg = seg * 255
         if i == max_subplots:  # if last batch has fewer images than we expect
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin)
