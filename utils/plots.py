@@ -235,21 +235,30 @@ def seg_pred_to_image(seg_mask):
     return numpy_pred
 
 @threaded
-def plot_masks(seg_preds, fname='mask.jpg'):
+def plot_masks(segs, seg_preds, fname='mask.jpg'):
     max_subplots = 16  # max image subplots, i.e. 4x4
-    bs = seg_preds.shape[0]
+    bs, _, h, w = segs.shape  # batch size, _, height, width
     ns = np.ceil(bs ** 0.5)  # number of subplots (square)
 
-    mosaic = np.full((int(ns * 320), int(ns * 320)), 255, dtype=np.uint8)  # init
+    mosaic = np.full((int(ns * h), int(ns * w)), 255, dtype=np.uint8)  # init
     for i, seg_pred in enumerate(seg_preds):
         mask = seg_pred_to_image(seg_pred)
-        h, w = mask.shape
         if i == max_subplots:  # if last batch has fewer images than we expect
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin)
         mosaic[y:y + h, x:x + w] = mask
 
+    mosaic_real = np.full((int(ns * h), int(ns * w)), 255, dtype=np.uint8)  # init
+    for i, seg in enumerate(segs):
+        if i == max_subplots:  # if last batch has fewer images than we expect
+            break
+        x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin)
+        mosaic_real[y:y + h, x:x + w] = seg
+    fname_real = fname[:-4] + '_real.jpg'
+
     cv2.imwrite(fname, mosaic)
+    cv2.imwrite(fname_real, mosaic_real)
+
 
 @threaded
 def plot_images(images, targets, paths=None, fname='images.jpg', names=None):
@@ -513,7 +522,7 @@ def plot_evolve(evolve_csv='path/to/evolve.csv'):  # from utils.plots import *; 
 def plot_results(file='path/to/results.csv', dir=''):
     # Plot training results.csv. Usage: from utils.plots import *; plot_results('path/to/results.csv')
     save_dir = Path(file).parent if file else Path(dir)
-    fig, ax = plt.subplots(2, 7, figsize=(15, 9), tight_layout=True)
+    fig, ax = plt.subplots(3, 5, figsize=(15, 9), tight_layout=True)
     ax = ax.ravel()
     files = list(save_dir.glob('results*.csv'))
     assert len(files), f'No results.csv files found in {save_dir.resolve()}, nothing to plot.'
