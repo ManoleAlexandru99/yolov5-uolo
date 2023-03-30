@@ -854,7 +854,7 @@ class Seg(nn.Module):
         self.cv1 = Conv(in_channels, 32, k=3)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.cv2 = Conv(32, 64, k=3)
-        self.cv3 = Conv(64, 1)
+        self.cv3 = Conv(64, 1, act=False)
         self.relu = nn.ReLU()
         # self.sigmoid = nn.Sigmoid()
 
