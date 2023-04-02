@@ -72,13 +72,13 @@ class Loggers():
             'metrics/precision',
             'metrics/recall',
             'metrics/mAP_0.5',
-            'metrics/mAP_0.5:0.95',
-            'metrics/mIoU',
-            'metrics/railIoU',  # metrics
+            'metrics/mAP_0.5:0.95', # metrics
             'val/box_loss',
             'val/obj_loss',
             'val/cls_loss',
             'val/seg_loss',  # val loss
+            'metrics/mIoU',
+            'metrics/railIoU',  # metrics
             'x/lr0',
             'x/lr1',
             'x/lr2']  # params

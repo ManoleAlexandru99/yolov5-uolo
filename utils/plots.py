@@ -536,7 +536,7 @@ def plot_results(file='path/to/results.csv', dir=''):
             s = [x.strip() for x in data.columns]
             print('\n------------ S:', s, '--------------\n')
             x = data.values[:, 0]
-            for i, j in enumerate([1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 11, 12, 9, 10]):
+            for i, j in enumerate([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]):
                 y = data.values[:, j].astype('float')
                 # y[y == 0] = np.nan  # don't show zero values
                 ax[i].plot(x, y, marker='.', label=f.stem, linewidth=2, markersize=8)
