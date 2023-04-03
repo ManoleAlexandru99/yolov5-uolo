@@ -248,7 +248,6 @@ def plot_masks(segs, seg_preds, fname='mask.jpg', fname_real='real.jpg'):
         if i == max_subplots:  # if last batch has fewer images than we expect
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin)
-        print('\n X: ', x, 'Y: ', y, '\n')
         mosaic[y:y + h, x:x + w] = mask
 
     mosaic_real = np.full((int(ns * h), int(ns * w)), 255, dtype=np.uint8)  # init
@@ -534,7 +533,6 @@ def plot_results(file='path/to/results.csv', dir=''):
         try:
             data = pd.read_csv(f)
             s = [x.strip() for x in data.columns]
-            print('\n------------ S:', s, '--------------\n')
             x = data.values[:, 0]
             for i, j in enumerate([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]):
                 y = data.values[:, j].astype('float')
