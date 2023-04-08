@@ -532,7 +532,7 @@ def parse_opt(known=False):
 
 
 def main(opt, callbacks=Callbacks()):
-    print('\n---------- VERSION:', '#0010', '----------\n')
+    print('\n---------- VERSION:', '#0011', '----------\n')
     # Checks
     if RANK in {-1, 0}:
         print_args(vars(opt))

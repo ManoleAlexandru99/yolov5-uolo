@@ -240,7 +240,7 @@ def plot_masks(segs, seg_preds, fname='mask.jpg', fname_real='real.jpg'):
     bs, _, h, w = segs.shape  # batch size, _, height, width
     bs = min(bs, max_subplots)  # limit plot images
     ns = np.ceil(bs ** 0.5)  # number of subplots (square)
-    print('\n--------------NS: ', ns, '------------\n')
+    # print('\n--------------NS: ', ns, '------------\n')
 
     mosaic = np.full((int(ns * h), int(ns * w)), 255, dtype=np.uint8)  # init
     for i, seg_pred in enumerate(seg_preds):
