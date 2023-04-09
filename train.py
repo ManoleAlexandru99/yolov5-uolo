@@ -268,7 +268,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f'Starting training for {epochs} epochs...')
-    torch.autograd.set_detect_anomaly(True)
+
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run('on_train_epoch_start')
         model.train()
@@ -532,7 +532,7 @@ def parse_opt(known=False):
 
 
 def main(opt, callbacks=Callbacks()):
-    print('\n---------- VERSION:', '#0011', '----------\n')
+    print('\n---------- VERSION:', '#0012', '----------\n')
     # Checks
     if RANK in {-1, 0}:
         print_args(vars(opt))
