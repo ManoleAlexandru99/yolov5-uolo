@@ -338,7 +338,10 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     loss *= 4.
 
             # Backward
-            scaler.scale(loss).backward(retain_graph=True)
+            try:
+                scaler.scale(loss).backward(retain_graph=True)
+            except Exception as e:
+                print('\n-------- FOUND EXCEPTION: ', e, ' Life goes on.-------\n')
 
             scaler_seg.scale(loss_seg).backward()
 
