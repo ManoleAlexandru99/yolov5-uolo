@@ -856,16 +856,23 @@ class Seg(nn.Module):
         self.cv2 = Conv(32, 64, k=3)
         self.cv3 = Conv(64, 1, act=False)
         self.relu = nn.ReLU()
+
+        self.dropout_weak= nn.Dropout(0.25)
+        self.dropout_normal = nn.Dropout(0.5)
         # self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         # print('----entry shape', x.shape, '---\n')
+        x = self.dropout_weak(x)
         x = self.cv1(x)
         x = self.upsample(x)
         # x = self.relu(x)
         # print('----upsample shape', x.shape, '---\n')
+        x = self.dropout_normal(x)
         x = self.cv2(x)
         x = self.upsample(x)
+
+        x = self.dropout_normal(x)
         # x = self.relu(x)
         x = self.cv3(x)
         # print('----out shape', x.shape, '---\n')
