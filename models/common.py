@@ -858,7 +858,7 @@ class Seg(nn.Module):
         self.relu = nn.ReLU()
 
         # self.dropout_weak = nn.Dropout(0.25)
-        self.dropout_normal = nn.Dropout(0.5)
+        self.dropout_normal = nn.Dropout(0.25)
         # self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
