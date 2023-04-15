@@ -689,8 +689,10 @@ class LoadImagesAndLabels(Dataset):
                                                                     scale=hyp['scale'],
                                                                     shear=hyp['shear'],
                                                                     perspective=hyp['perspective'])
+                cv2.imwrite('runs/image' + str(index) + '.jpg', img)
                 seg, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters)
+                cv2.imwrite('runs/mask' + str(index) + '.jpg', mask)
 
         nl = len(labels)  # number of labels
         if nl:
