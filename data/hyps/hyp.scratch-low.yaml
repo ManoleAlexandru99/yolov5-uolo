@@ -12,7 +12,7 @@ warmup_momentum: 0.8  # warmup initial momentum
 warmup_bias_lr: 0.1  # warmup initial bias lr
 box: 0.05  # box loss gain
 seg: 1 # seg loss
-det: 1 # Weights all detection losses in the same time (instead of having to change all 3 values)
+det: 0 # Weights all detection losses in the same time (instead of having to change all 3 values)
 cls: 0.5  # cls loss gain
 cls_pw: 1.0  # cls BCELoss positive_weight
 obj: 1.0  # obj loss gain (scale with pixels)

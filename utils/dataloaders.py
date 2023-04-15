@@ -700,7 +700,7 @@ class LoadImagesAndLabels(Dataset):
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
             h, w = seg.shape[0], seg.shape[1]
             resized = cv2.resize(seg, (h, w), interpolation=cv2.INTER_AREA)
-            cv2.imwrite('runs/maskr' + str(index) + '.png', seg)
+            cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
         nl = len(labels)  # number of labels
         if nl:
             labels[:, 1:5] = xyxy2xywhn(labels[:, 1:5], w=img.shape[1], h=img.shape[0], clip=True, eps=1E-3)
