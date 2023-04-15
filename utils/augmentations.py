@@ -172,7 +172,6 @@ def random_perspective(im,
         rand_shear2 = random.uniform(-shear, shear)
         t1 = random.uniform(0.5 - translate, 0.5 + translate)
         t2 = random.uniform(0.5 - translate, 0.5 + translate)
-        random_parameters = [p20, p21, a, s, rand_shear1, rand_shear2, t1, t2]
     else:
         p20 = random_parameters[0]
         p21 = random_parameters[1]
@@ -254,6 +253,7 @@ def random_perspective(im,
         targets = targets[i]
         targets[:, 1:5] = new[i]
 
+    random_parameters = [p20, p21, a, s, rand_shear1, rand_shear2, t1, t2]
     return im, targets, random_parameters
 
 
