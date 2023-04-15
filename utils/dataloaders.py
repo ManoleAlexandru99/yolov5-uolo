@@ -693,17 +693,18 @@ class LoadImagesAndLabels(Dataset):
                                                                     scale=hyp['scale'],
                                                                     shear=hyp['shear'],
                                                                     perspective=hyp['perspective'])
+                preseg = seg
                 seg, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters,
                                                border_value=(0, 0, 0))
-                test, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
+                test, _, _ = random_perspective(preseg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters)
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
             cv2.imwrite('runs/maskborder' + str(index) + '.png', test)
             h, w = seg.shape[0], seg.shape[1]
-            resized = cv2.resize(seg, (w, h), interpolation=cv2.INTER_AREA)
+            resized = cv2.resize(seg, (w * 2, h * 2), interpolation=cv2.INTER_AREA)
             cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
         nl = len(labels)  # number of labels
         if nl:
