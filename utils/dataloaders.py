@@ -701,7 +701,7 @@ class LoadImagesAndLabels(Dataset):
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
-            cv2.imwrite('runs/mask1' + str(index) + '.png', test)
+            cv2.imwrite('runs/maskborder' + str(index) + '.png', test)
             h, w = seg.shape[0], seg.shape[1]
             resized = cv2.resize(seg, (w, h), interpolation=cv2.INTER_AREA)
             cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
