@@ -670,6 +670,7 @@ class LoadImagesAndLabels(Dataset):
             '''
 
         else:
+            test = None
             # Load image
             img, (h0, w0), (h, w), seg = self.load_image(index)
 
@@ -695,11 +696,14 @@ class LoadImagesAndLabels(Dataset):
                 seg, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters,
                                                border_value=(0, 0, 0))
+                test, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
+                                               shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters)
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
+            cv2.imwrite('runs/mask1' + str(index) + '.png', test)
             h, w = seg.shape[0], seg.shape[1]
-            resized = cv2.resize(seg, (h, w), interpolation=cv2.INTER_AREA)
+            resized = cv2.resize(seg, (w, h), interpolation=cv2.INTER_AREA)
             cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
         nl = len(labels)  # number of labels
         if nl:
