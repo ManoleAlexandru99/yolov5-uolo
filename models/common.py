@@ -871,7 +871,7 @@ class Seg(nn.Module):
         x = self.upsample(x)
 
         # x = self.relu(x)
-        x = self.dropout_normal(x)
+        # x = self.dropout_normal(x)
         x = self.cv3(x)
         # print('----out shape', x.shape, '---\n')
         # x = self.sigmoid(x)
