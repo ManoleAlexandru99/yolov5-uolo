@@ -851,10 +851,12 @@ class Seg(nn.Module):
 
     def __init__(self, in_channels):
         super().__init__()
+        print('SEG in channels: ', in_channels)
         self.cv1 = Conv(in_channels, 32, k=3)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.cv2 = Conv(32, 64, k=3)
-        self.cv3 = Conv(64, 1, act=False)
+        self.cv3 = Conv(64, 64, k=3)
+        self.cv4 = Conv(64, 1, act=False)
         self.relu = nn.ReLU()
 
         # self.dropout_weak = nn.Dropout(0.25)
@@ -873,8 +875,11 @@ class Seg(nn.Module):
         # x = self.relu(x)
         # x = self.dropout_normal(x)
         x = self.cv3(x)
+        x = self.upsample(x)
         # print('----out shape', x.shape, '---\n')
         # x = self.sigmoid(x)
+
+        x = self.cv4(x)
         return x
 
 

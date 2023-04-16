@@ -677,7 +677,8 @@ class LoadImagesAndLabels(Dataset):
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
-            mask_shape = [shape[0] // 2, shape[1] // 2] if self.rect else self.img_size // 2
+            # mask_shape = [shape[0] // 2, shape[1] // 2] if self.rect else self.img_size // 2
+            mask_shape = [shape[0], shape[1]] if self.rect else self.img_size
             seg, _, _ = letterbox(seg, mask_shape, auto=False, scaleup=self.augment, color=(0, 0, 0))
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
