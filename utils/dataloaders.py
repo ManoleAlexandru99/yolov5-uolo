@@ -657,7 +657,7 @@ class LoadImagesAndLabels(Dataset):
 
         hyp = self.hyp
         mosaic = self.mosaic and random.random() < hyp['mosaic']
-        if False: # mosaic:
+        if mosaic:
             # Load mosaic
             img, labels, seg = self.load_mosaic(index)
             shapes = None
@@ -670,7 +670,6 @@ class LoadImagesAndLabels(Dataset):
             '''
 
         else:
-            test = None
             # Load image
             img, (h0, w0), (h, w), seg = self.load_image(index)
 
@@ -697,7 +696,6 @@ class LoadImagesAndLabels(Dataset):
                 seg, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters,
                                                border_value=(0, 0, 0))
-        '''
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
@@ -705,7 +703,7 @@ class LoadImagesAndLabels(Dataset):
             h, w = seg.shape[0], seg.shape[1]
             resized = cv2.resize(seg, (w * 2, h * 2), interpolation=cv2.INTER_AREA)
             cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
-        '''
+        
         nl = len(labels)  # number of labels
         if nl:
             labels[:, 1:5] = xyxy2xywhn(labels[:, 1:5], w=img.shape[1], h=img.shape[0], clip=True, eps=1E-3)
