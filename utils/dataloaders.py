@@ -699,11 +699,10 @@ class LoadImagesAndLabels(Dataset):
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
-            cv2.imwrite('runs/maskborder' + str(index) + '.png', test)
             h, w = seg.shape[0], seg.shape[1]
             resized = cv2.resize(seg, (w * 2, h * 2), interpolation=cv2.INTER_AREA)
             cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
-        
+
         nl = len(labels)  # number of labels
         if nl:
             labels[:, 1:5] = xyxy2xywhn(labels[:, 1:5], w=img.shape[1], h=img.shape[0], clip=True, eps=1E-3)
@@ -844,7 +843,7 @@ class LoadImagesAndLabels(Dataset):
                                                               shear=self.hyp['shear'],
                                                               perspective=self.hyp['perspective'],
                                                               border=self.mosaic_border)  # border to remove
-        seg4, _, _ = random_perspective(img4, labels4, segments4, degrees=self.hyp['degrees'], translate=self.hyp['translate'],
+        seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=self.hyp['degrees'], translate=self.hyp['translate'],
                                         scale=self.hyp['scale'], shear=self.hyp['shear'], perspective=self.hyp['perspective'],
                                         border=self.mosaic_border, random_parameters=random_parameters)
 
