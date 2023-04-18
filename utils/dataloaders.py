@@ -845,9 +845,9 @@ class LoadImagesAndLabels(Dataset):
                                                               scale=0,
                                                               shear=0,
                                                               perspective=0,
-                                                              border=0)  # border to remove
+                                                              border=(0, 0))  # border to remove
         seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=0, translate=0,
-                                        scale=0, shear=0, perspective=0, border=0, random_parameters=random_parameters)
+                                        scale=0, shear=0, perspective=0, border=(0, 0), random_parameters=random_parameters)
 
         return img4, labels4, seg4
 
