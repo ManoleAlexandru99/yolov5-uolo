@@ -830,29 +830,24 @@ class LoadImagesAndLabels(Dataset):
 
         # Concat/clip labels
         labels4 = np.concatenate(labels4, 0)
-        '''
         for x in (labels4[:, 1:], *segments4):
             np.clip(x, 0, 2 * s, out=x)  # clip when using random_perspective()
-        '''
         # img4, labels4 = replicate(img4, labels4)  # replicate
 
         # Augment
         img4, labels4, segments4 = copy_paste(img4, labels4, segments4, p=self.hyp['copy_paste'])
-        '''
         # Mosaic only experiment
         img4, labels4, random_parameters = random_perspective(img4,
                                                               labels4,
                                                               segments4,
-                                                              degrees=self.hyp['degrees'],
-                                                              translate=self.hyp['translate'],
-                                                              scale=self.hyp['scale'],
-                                                              shear=self.hyp['shear'],
-                                                              perspective=self.hyp['perspective'],
-                                                              border=self.mosaic_border)  # border to remove
-        seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=self.hyp['degrees'], translate=self.hyp['translate'],
-                                        scale=self.hyp['scale'], shear=self.hyp['shear'], perspective=self.hyp['perspective'],
-                                        border=self.mosaic_border, random_parameters=random_parameters)
-        '''
+                                                              degrees=0,
+                                                              translate=0,
+                                                              scale=0,
+                                                              shear=0,
+                                                              perspective=0,
+                                                              border=0)  # border to remove
+        seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=0, translate=0,
+                                        scale=0, shear=0, perspective=0, border=0, random_parameters=random_parameters)
 
         return img4, labels4, seg4
 
