@@ -830,16 +830,14 @@ class LoadImagesAndLabels(Dataset):
 
         # Concat/clip labels
         labels4 = np.concatenate(labels4, 0)
-        '''
         for x in (labels4[:, 1:], *segments4):
             np.clip(x, 0, 2 * s, out=x)  # clip when using random_perspective()
-        '''
         # img4, labels4 = replicate(img4, labels4)  # replicate
 
         # Augment
         img4, labels4, segments4 = copy_paste(img4, labels4, segments4, p=self.hyp['copy_paste'])
         '''
-        # Mosaic only experiment
+        Mosaic only experiment
         img4, labels4, random_parameters = random_perspective(img4,
                                                               labels4,
                                                               segments4,
