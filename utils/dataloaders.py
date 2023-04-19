@@ -696,14 +696,12 @@ class LoadImagesAndLabels(Dataset):
                 seg, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters,
                                                border_value=(0, 0, 0))
-        '''
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
             h, w = seg.shape[0], seg.shape[1]
             resized = cv2.resize(seg, (w * 2, h * 2), interpolation=cv2.INTER_AREA)
             cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
-        '''
 
         nl = len(labels)  # number of labels
         if nl:
@@ -836,8 +834,6 @@ class LoadImagesAndLabels(Dataset):
 
         # Augment
         img4, labels4, segments4 = copy_paste(img4, labels4, segments4, p=self.hyp['copy_paste'])
-        '''
-        Mosaic only experiment
         img4, labels4, random_parameters = random_perspective(img4,
                                                               labels4,
                                                               segments4,
@@ -850,7 +846,6 @@ class LoadImagesAndLabels(Dataset):
         seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=self.hyp['degrees'], translate=self.hyp['translate'],
                                         scale=self.hyp['scale'], shear=self.hyp['shear'], perspective=self.hyp['perspective'],
                                         border=self.mosaic_border, random_parameters=random_parameters)
-        '''
 
         return img4, labels4, seg4
 
