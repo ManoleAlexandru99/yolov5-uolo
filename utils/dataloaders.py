@@ -833,11 +833,9 @@ class LoadImagesAndLabels(Dataset):
         for x in (labels4[:, 1:], *segments4):
             np.clip(x, 0, 2 * s, out=x)  # clip when using random_perspective()
         # img4, labels4 = replicate(img4, labels4)  # replicate
-        print(labels4)
 
         # Augment
         img4, labels4, segments4 = copy_paste(img4, labels4, segments4, p=self.hyp['copy_paste'])
-        '''
         # Mosaic only experiment
         img4, labels4, random_parameters = random_perspective(img4,
                                                               labels4,
@@ -850,7 +848,7 @@ class LoadImagesAndLabels(Dataset):
                                                               border=(0, 0))  # border to remove
         seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=0, translate=0,
                                         scale=0, shear=0, perspective=0, border=(0, 0), random_parameters=random_parameters)
-        '''
+
         return img4, labels4, seg4
 
     def load_mosaic9(self, index):
