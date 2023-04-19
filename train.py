@@ -391,6 +391,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
             final_epoch = (epoch + 1 == epochs) or stopper.possible_stop
             if not noval or final_epoch:  # Calculate mAP
+                '''
+                # Validation script on train data does not work for Mosaic Aug
                 results_train, maps_train, _ = validate.run(data_dict,
                                                 batch_size=batch_size // WORLD_SIZE * 2,
                                                 imgsz=imgsz,
@@ -402,7 +404,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                                 plots=False,
                                                 callbacks=callbacks,
                                                 compute_loss=compute_loss)
-
+                '''
                 results, maps, _ = validate.run(data_dict,
                                                 batch_size=batch_size // WORLD_SIZE * 2,
                                                 imgsz=imgsz,
