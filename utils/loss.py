@@ -43,7 +43,7 @@ class FocalLoss(nn.Module):
         self.loss_fcn.reduction = 'none'  # required to apply FL to each element
 
     def forward(self, pred, true):
-        loss = weighted_bce(pred, true, BETA=37)# self.loss_fcn(pred, true)
+        loss = weighted_bce(pred, true)# self.loss_fcn(pred, true)
         # p_t = torch.exp(-loss)
         # loss *= self.alpha * (1.000001 - p_t) ** self.gamma  # non-zero power for gradient stability
 
@@ -87,7 +87,7 @@ class QFocalLoss(nn.Module):
         else:  # 'none'
             return loss
 
-def weighted_bce(y_pred, y_true, BETA=2):
+def weighted_bce(y_pred, y_true, BETA=1.5):
     weights = (y_true * (BETA - 1)) + 1
     bce = nn.BCEWithLogitsLoss(reduction='none')(y_pred, y_true)
     wbce = torch.mean(bce * weights)
