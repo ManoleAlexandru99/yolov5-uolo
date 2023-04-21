@@ -851,34 +851,26 @@ class Seg(nn.Module):
 
     def __init__(self, in_channels):
         super().__init__()
-        print('SEG in channels: ', in_channels)
         self.cv1 = Conv(in_channels, 96, k=3)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.cv2 = Conv(192, 48, k=3)
-        self.cv3 = Conv(48, 16, k=3)
+        self.cv3 = Conv(96, 16, k=3)
         self.cv4 = Conv(16, 1, act=False)
         self.relu = nn.ReLU()
 
-        # self.dropout_weak = nn.Dropout(0.25)
         self.dropout_normal = nn.Dropout(0.5)
-        # self.sigmoid = nn.Sigmoid()
 
     def forward(self, x, skipped_input):
-        # print('----entry shape', x.shape, '---\n')
         x = self.cv1(x)
         x = self.upsample(x)
-        # Here you could use 2/1  96 - channels
-        x = torch.cat((x, skipped_input), 1)
+        x = torch.cat((x, skipped_input[0]), 1)  # Skip connection
 
-        # print('----upsample shape', x.shape, '---\n')
         x = self.cv2(x)
         x = self.upsample(x)
+        x = torch.cat((x, skipped_input[1]), 1)  # Skip connection
 
-        # x = self.dropout_normal(x)
         x = self.cv3(x)
         x = self.upsample(x)
-        # print('----out shape', x.shape, '---\n')
-
         x = self.cv4(x)
         return x
 
