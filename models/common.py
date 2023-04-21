@@ -852,11 +852,11 @@ class Seg(nn.Module):
     def __init__(self, in_channels):
         super().__init__()
         print('SEG in channels: ', in_channels)
-        self.cv1 = Conv(in_channels, 64, k=3)
+        self.cv1 = Conv(in_channels, 8, k=3)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
-        self.cv2 = Conv(64, 128, k=3)
-        self.cv3 = Conv(128, 64, k=3)
-        self.cv4 = Conv(64, 1, act=False)
+        self.cv2 = Conv(8, 16, k=3)
+        self.cv3 = Conv(16, 8, k=3)
+        self.cv4 = Conv(8, 1, act=False)
         self.relu = nn.ReLU()
 
         # self.dropout_weak = nn.Dropout(0.25)
