@@ -863,19 +863,23 @@ class Seg(nn.Module):
         self.dropout_normal = nn.Dropout(0.5)
         # self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x, new_x):
+        print('new x:', new_x.shape)
         # print('----entry shape', x.shape, '---\n')
         x = self.cv1(x)
         x = self.upsample(x)
+        print('post unsample 1:', x.shape)
         # x = self.relu(x)
         # print('----upsample shape', x.shape, '---\n')
         x = self.cv2(x)
         x = self.upsample(x)
+        print('post unsample 2:', x.shape)
 
         # x = self.relu(x)
         # x = self.dropout_normal(x)
         x = self.cv3(x)
         x = self.upsample(x)
+        print('post unsample 3:', x.shape)
         # print('----out shape', x.shape, '---\n')
         # x = self.sigmoid(x)
 
