@@ -583,7 +583,7 @@ class LoadImagesAndLabels(Dataset):
                 if cache_images == 'disk':
                     b += self.npy_files[i].stat().st_size
                 else:  # 'ram'
-                    self.ims[i], self.im_hw0[i], self.im_hw[i], seg = x  # im, hw_orig, hw_resized = load_image(self, i)
+                    self.ims[i], self.im_hw0[i], self.im_hw[i], seg, pre = x  # im, hw_orig, hw_resized = load_image(self, i)
                     b += self.ims[i].nbytes
                 pbar.desc = f'{prefix}Caching images ({b / gb:.1f}GB {cache_images})'
             pbar.close()
@@ -751,7 +751,7 @@ class LoadImagesAndLabels(Dataset):
         img = np.concatenate(img, pre, axis=1)
         print('EXTRA INPUT IMAGE SHAPE:', img.shape)
         img = np.ascontiguousarray(img)
-        
+
         if not np.all((seg >= 0)):
             print('\n POST AUGMENTATION MASK ERROR \n')
         # Convert Mask
@@ -794,7 +794,8 @@ class LoadImagesAndLabels(Dataset):
                 interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
                 im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
                 seg = cv2.resize(seg, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
-            return im, (h0, w0), im.shape[:2], seg  # im, hw_original, hw_resized
+                preprocessed = cv2.resize(preprocessed, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
+            return im, (h0, w0), im.shape[:2], seg, preprocessed  # im, hw_original, hw_resized
         return self.ims[i], self.im_hw0[i], self.im_hw[i], seg, preprocessed  # im, hw_original, hw_resized
 
     def cache_images_to_disk(self, i):
