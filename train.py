@@ -339,6 +339,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 if opt.quad:
                     loss *= 4.
 
+            imgs = imgs[:, :3, :, :]
             # Backward
             try:
                 scaler.scale(loss).backward(retain_graph=True)
