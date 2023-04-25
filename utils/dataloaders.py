@@ -748,7 +748,7 @@ class LoadImagesAndLabels(Dataset):
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         pre = cv2.cvtColor(pre, cv2.COLOR_BGR2GRAY)
         pre = np.expand_dims(pre, axis=0)
-        img = np.concatenate(img, pre, axis=1)
+        img = np.concatenate((img, pre), axis=1)
         print('EXTRA INPUT IMAGE SHAPE:', img.shape)
         img = np.ascontiguousarray(img)
 
