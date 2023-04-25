@@ -659,7 +659,7 @@ class LoadImagesAndLabels(Dataset):
         mosaic = self.mosaic and random.random() < hyp['mosaic']
         if mosaic:
             # Load mosaic
-            img, labels, seg = self.load_mosaic(index)
+            img, labels, seg, pre = self.load_mosaic(index)
             shapes = None
 
             # MixUp augmentation
@@ -671,7 +671,7 @@ class LoadImagesAndLabels(Dataset):
 
         else:
             # Load image
-            img, (h0, w0), (h, w), seg = self.load_image(index)
+            img, (h0, w0), (h, w), seg, pre = self.load_image(index)
 
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
@@ -679,6 +679,7 @@ class LoadImagesAndLabels(Dataset):
             # mask_shape = [shape[0] // 2, shape[1] // 2] if self.rect else self.img_size // 2
             mask_shape = [shape[0], shape[1]] if self.rect else self.img_size
             seg, _, _ = letterbox(seg, mask_shape, auto=False, scaleup=self.augment, color=(0, 0, 0))
+            pre, _, _ = letterbox(pre, mask_shape, auto=False, scaleup=self.augment, color=(0, 0, 0))
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
             labels = self.labels[index].copy()
@@ -696,12 +697,15 @@ class LoadImagesAndLabels(Dataset):
                 seg, _, _ = random_perspective(seg, labels, degrees=hyp['degrees'], translate=hyp['translate'], scale=hyp['scale'],
                                                shear=hyp['shear'], perspective=hyp['perspective'], random_parameters=random_parameters,
                                                border_value=(0, 0, 0))
+                pre, _, _ = random_perspective(pre, labels, degrees=self.hyp['degrees'],
+                                                translate=self.hyp['translate'],
+                                                scale=self.hyp['scale'], shear=self.hyp['shear'],
+                                                perspective=self.hyp['perspective'],
+                                                border=self.mosaic_border, random_parameters=random_parameters)
         if index < 50:
             cv2.imwrite('runs/image' + str(index) + '.jpg', img)
             cv2.imwrite('runs/mask' + str(index) + '.png', seg)
-            h, w = seg.shape[0], seg.shape[1]
-            resized = cv2.resize(seg, (w * 2, h * 2), interpolation=cv2.INTER_AREA)
-            cv2.imwrite('runs/maskr' + str(index) + '.png', resized)
+            cv2.imwrite('runs/pre' + str(index) + '.png', pre)
 
         nl = len(labels)  # number of labels
         if nl:
@@ -720,6 +724,7 @@ class LoadImagesAndLabels(Dataset):
             if random.random() < hyp['flipud']:
                 img = np.flipud(img)
                 seg = np.flipud(seg)
+                pre = np.flipud(pre)
                 if nl:
                     labels[:, 2] = 1 - labels[:, 2]
 
@@ -727,6 +732,7 @@ class LoadImagesAndLabels(Dataset):
             if random.random() < hyp['fliplr']:
                 img = np.fliplr(img)
                 seg = np.fliplr(seg)
+                pre = np.fliplr(pre)
                 if nl:
                     labels[:, 1] = 1 - labels[:, 1]
 
@@ -740,7 +746,12 @@ class LoadImagesAndLabels(Dataset):
 
         # Convert
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
+        pre = cv2.cvtColor(pre, cv2.COLOR_BGR2GRAY)
+        pre = np.expand_dims(pre, axis=0)
+        img = np.concatenate(img, pre, axis=1)
+        print('EXTRA INPUT IMAGE SHAPE:', img.shape)
         img = np.ascontiguousarray(img)
+        
         if not np.all((seg >= 0)):
             print('\n POST AUGMENTATION MASK ERROR \n')
         # Convert Mask
@@ -756,6 +767,7 @@ class LoadImagesAndLabels(Dataset):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
         im, f, fn = self.ims[i], self.im_files[i], self.npy_files[i],
         seg = None
+        preprocessed = None
         if im is None:  # not cached in RAM
             if fn.exists():  # load npy
                 im = np.load(fn)
@@ -766,8 +778,14 @@ class LoadImagesAndLabels(Dataset):
                 seg_path = '/'.join(split_path)
                 seg = cv2.imread(seg_path)
 
+                split_path2 = f.split('/')
+                split_path2[4] = 'preprocessed'
+                preprocessed_path = '/'.join(split_path2)
+                preprocessed = cv2.imread(preprocessed_path)
+
                 im = cv2.imread(f)  # BGR
 
+                assert preprocessed is not None, f'Preprocessed Image Not Found {preprocessed_path}'
                 assert seg is not None, f'Segmentation Mask Not Found {seg_path}'
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
@@ -777,7 +795,7 @@ class LoadImagesAndLabels(Dataset):
                 im = cv2.resize(im, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
                 seg = cv2.resize(seg, (math.ceil(w0 * r), math.ceil(h0 * r)), interpolation=interp)
             return im, (h0, w0), im.shape[:2], seg  # im, hw_original, hw_resized
-        return self.ims[i], self.im_hw0[i], self.im_hw[i], seg  # im, hw_original, hw_resized
+        return self.ims[i], self.im_hw0[i], self.im_hw[i], seg, preprocessed  # im, hw_original, hw_resized
 
     def cache_images_to_disk(self, i):
         # Saves an image as an *.npy file for faster loading
@@ -788,19 +806,20 @@ class LoadImagesAndLabels(Dataset):
     def load_mosaic(self, index):
         # YOLOv5 4-mosaic loader. Loads 1 image + 3 random images into a 4-image mosaic
         labels4, segments4 = [], []
-        seg4 = []
+        seg4, pre4 = [], []
         s = self.img_size
         yc, xc = (int(random.uniform(-x, 2 * s + x)) for x in self.mosaic_border)  # mosaic center x, y
         indices = [index] + random.choices(self.indices, k=3)  # 3 additional image indices
         random.shuffle(indices)
         for i, index in enumerate(indices):
             # Load image
-            img, _, (h, w), seg = self.load_image(index)
+            img, _, (h, w), seg, preprocessed = self.load_image(index)
 
             # place img in img4
             if i == 0:  # top left
                 img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)  # base image with 4 tiles
                 seg4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)
+                pre4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)
                 x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc  # xmin, ymin, xmax, ymax (large image)
                 x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (y2a - y1a), w, h  # xmin, ymin, xmax, ymax (small image)
             elif i == 1:  # top right
@@ -815,6 +834,7 @@ class LoadImagesAndLabels(Dataset):
 
             img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]  # img4[ymin:ymax, xmin:xmax]
             seg4[y1a:y2a, x1a:x2a] = seg[y1b:y2b, x1b:x2b]
+            pre4[y1a:y2a, x1a:x2a] = preprocessed[y1b:y2b, x1b:x2b]
             padw = x1a - x1b
             padh = y1a - y1b
 
@@ -846,8 +866,10 @@ class LoadImagesAndLabels(Dataset):
         seg4, _, _ = random_perspective(seg4, labels4, segments4, degrees=self.hyp['degrees'], translate=self.hyp['translate'],
                                         scale=self.hyp['scale'], shear=self.hyp['shear'], perspective=self.hyp['perspective'],
                                         border=self.mosaic_border, random_parameters=random_parameters)
-
-        return img4, labels4, seg4
+        pre4, _, _ = random_perspective(pre4, labels4, segments4, degrees=self.hyp['degrees'], translate=self.hyp['translate'],
+                                        scale=self.hyp['scale'], shear=self.hyp['shear'], perspective=self.hyp['perspective'],
+                                        border=self.mosaic_border, random_parameters=random_parameters)
+        return img4, labels4, seg4, pre4
 
     def load_mosaic9(self, index):
         # YOLOv5 9-mosaic loader. Loads 1 image + 8 random images into a 9-image mosaic
