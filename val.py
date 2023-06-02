@@ -234,10 +234,13 @@ def run(
 
         # Inference
         with dt[1]:
-            preds, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
-            pred_mask = preds[1]
-            preds = preds[0]
-            
+            try:
+                preds, pred_mask, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
+            except:
+                preds, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
+                pred_mask = preds[1]
+                preds = preds[0]
+
         ious = compute_seg_iou(pred_mask, segs)
         # print('\n------------ IoU: ', ious, '------------\n')
         iou += (ious[0] + ious[1]) / 2
