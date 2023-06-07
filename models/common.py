@@ -873,7 +873,8 @@ class Seg(nn.Module):
 
         x = self.cv2(x)
         x = self.upsample(x)
-        x = torch.cat((x, skipped_input[1]), 1)  # Skip connection
+        x2 = self.cv11(skipped_input[1])
+        x = torch.cat((x, x2), 1)  # Skip connection
 
         x = self.cv3(x)
         x = self.upsample(x)
