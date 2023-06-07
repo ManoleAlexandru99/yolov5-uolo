@@ -852,7 +852,8 @@ class Seg(nn.Module):
     def __init__(self, in_channels):
 
         super().__init__()
-        self.cv1 = Conv(in_channels, 32, k=3)
+        print('\nIN CHANNELS SEG: in_channels\n')
+        self.cv1 = Conv(in_channels, 64, k=3)
         self.cv11 = Conv(96, 32, k=3)
 
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
@@ -866,8 +867,8 @@ class Seg(nn.Module):
 
         x = self.cv1(x)
         x = self.upsample(x)
-        x2 = self.cv11(skipped_input[0])
-        x = torch.cat((x, x2), 1)  # Skip connection
+        # x2 = self.cv11(skipped_input[0])
+        # x = torch.cat((x, x2), 1)  # Skip connection
 
         x = self.cv2(x)
         x = self.upsample(x)
