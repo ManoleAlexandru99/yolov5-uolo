@@ -859,8 +859,8 @@ class Seg(nn.Module):
 
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.cv2 = Conv(192, 48, k=3)
-        self.cv3 = Conv(96, 8, k=3)
-        self.cv4 = Conv(8, 1, act=False)
+        self.cv3 = Conv(96, 16, k=3)
+        self.cv4 = Conv(16, 1, act=False)
         self.relu = nn.ReLU()
         self.dropout_normal = nn.Dropout(0.5)
 
