@@ -258,7 +258,7 @@ def run(
                                         conf_thres,
                                         iou_thres,
                                         labels=lb,
-                                        multi_label=True,
+                                        multi_label=False,
                                         agnostic=single_cls,
                                         max_det=max_det)
 
