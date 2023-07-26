@@ -858,8 +858,8 @@ class Seg(nn.Module):
         # self.cv22 = Conv(48, 16, k=3)
 
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
-        self.cv2 = Conv(256, 96, k=3)
-        self.cv3 = Conv(128, 16, k=3)
+        self.cv2 = Conv(256, 80, k=3)
+        self.cv3 = Conv(160, 16, k=3)
         self.cv4 = Conv(16, 1, act=False)
         self.relu = nn.ReLU()
         self.dropout_normal = nn.Dropout(0.5)
@@ -874,6 +874,7 @@ class Seg(nn.Module):
         x = self.cv2(x)
         x = self.upsample(x)
         # x2 = self.cv22(skipped_input[1])
+        print(skipped_input[1].shape)
         x = torch.cat((x, skipped_input[1]), 1)  # Skip connection
 
         x = self.cv3(x)
