@@ -852,7 +852,7 @@ class Seg(nn.Module):
     def __init__(self, in_channels):
 
         super().__init__()
-        print('\nIN CHANNELS SEG:', in_channels, '\n')
+        # print('\nIN CHANNELS SEG:', in_channels, '\n')
         self.cv1 = Conv(in_channels, 96, k=3)
         # self.cv11 = Conv(96, 32, k=3)
         # self.cv22 = Conv(48, 16, k=3)
