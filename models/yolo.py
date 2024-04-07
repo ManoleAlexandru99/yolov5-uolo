@@ -117,7 +117,10 @@ class SemanticSegment(Detect):
         self.detect = Detect.forward
 
     def forward(self, x):
-        p = self.semantic_seg(x[0])
+        old_x = x[:3]
+        new_skip_connect_info = x[3:]
+        x = old_x
+        p = self.semantic_seg(x[0], new_skip_connect_info)
         x = self.detect(self, x)
         return (x, p) if self.training else (x[0], p) if self.export else (x[0], p, x[1])
 

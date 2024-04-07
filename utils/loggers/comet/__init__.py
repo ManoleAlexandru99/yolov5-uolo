@@ -60,6 +60,15 @@ RANK = int(os.getenv('RANK', -1))
 
 to_pil = T.ToPILImage()
 
+def seg_pred_to_image(seg_mask):
+    seg_mask = torch.sigmoid(seg_mask)
+    seg_mask[seg_mask < 0.5] = 0
+    seg_mask[seg_mask >= 0.5] = 1
+    numpy_pred = seg_mask.cpu().numpy()
+    numpy_pred = numpy_pred[0][0]
+    numpy_pred = numpy_pred * 255
+    return numpy_pred
+
 
 class CometLogger:
     """Log metrics, parameters, source code, models and much more
@@ -241,7 +250,7 @@ class CometLogger:
 
         return check_dataset(data_file)
 
-    def log_predictions(self, image, labelsn, path, shape, predn):
+    def log_predictions(self, image, labelsn, path, shape, predn, seg_mask):
         if self.logged_images_count >= self.max_images:
             return
         detections = predn[predn[:, 4] > self.conf_thres]
@@ -255,9 +264,11 @@ class CometLogger:
 
         image_id = path.split('/')[-1].split('.')[0]
         image_name = f'{image_id}_curr_epoch_{self.experiment.curr_epoch}'
+        mask_name = f'{image_id}_curr_epoch_mask_{self.experiment.curr_epoch}'
         if image_name not in self.logged_image_names:
             native_scale_image = PIL.Image.open(path)
             self.log_image(native_scale_image, name=image_name)
+            self.log_image(seg_mask, name=mask_name)
             self.logged_image_names.append(image_name)
 
         metadata = []
@@ -443,21 +454,22 @@ class CometLogger:
     def on_val_batch_start(self):
         return
 
-    def on_val_batch_end(self, batch_i, images, targets, paths, shapes, outputs):
+    def on_val_batch_end(self, batch_i, images, targets, paths, shapes, outputs, outputs_seg):
         if not (self.comet_log_predictions and ((batch_i + 1) % self.comet_log_prediction_interval == 0)):
             return
 
-        for si, pred in enumerate(outputs):
+        for si, (pred, pred_mask) in enumerate(zip(outputs, outputs_seg)):
             if len(pred) == 0:
                 continue
 
             image = images[si]
+            seg_mask = seg_pred_to_image(pred_mask)
             labels = targets[targets[:, 0] == si, 1:]
             shape = shapes[si]
             path = paths[si]
             predn, labelsn = self.preprocess_prediction(image, labels, shape, pred)
             if labelsn is not None:
-                self.log_predictions(image, labelsn, path, shape, predn)
+                self.log_predictions(image, labelsn, path, shape, predn, seg_mask)
 
         return
 

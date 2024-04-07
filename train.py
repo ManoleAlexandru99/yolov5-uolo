@@ -56,7 +56,7 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, check_amp, check_dataset, ch
 from utils.loggers import Loggers
 from utils.loggers.comet.comet_utils import check_comet_resume
 from utils.loss import ComputeLoss
-from utils.metrics import fitness
+from utils.metrics import fitness, seg_fitness
 from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
@@ -76,7 +76,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # Directories
     w = save_dir / 'weights'  # weights dir
     (w.parent if evolve else w).mkdir(parents=True, exist_ok=True)  # make dir
-    last, best = w / 'last.pt', w / 'best.pt'
+    last, best, best_seg = w / 'last.pt', w / 'best.pt', w / 'best_seg.pt'
 
     # Hyperparameters
     if isinstance(hyp, str):
@@ -171,6 +171,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
     # Resume
     best_fitness, start_epoch = 0.0, 0
+    best_fitness_seg = 0.0
     if pretrained:
         if resume:
             best_fitness, start_epoch, epochs = smart_resume(ckpt, optimizer, ema, weights, epochs, resume)
@@ -240,7 +241,9 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     hyp['cls'] *= nc / 80 * 3 / nl  # scale to classes and layers
     hyp['obj'] *= (imgsz / 640) ** 2 * 3 / nl  # scale to image size and layers
 
-    hyp['seg'] = 1
+    hyp['box'] *= hyp['det']
+    hyp['cls'] *= hyp['det']
+    hyp['obj'] *= hyp['det']
 
     hyp['label_smoothing'] = opt.label_smoothing
     model.nc = nc  # attach number of classes to model
@@ -255,11 +258,11 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # nw = min(nw, (epochs - start_epoch) / 2 * nb)  # limit warmup to < 1/2 of training
     last_opt_step = -1
     maps = np.zeros(nc)  # mAP per class
-    results = (0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)
+    results = (0, 0, 0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls), mIoU, railIoU
     scheduler.last_epoch = start_epoch - 1  # do not move
     scheduler_seg.last_epoch = start_epoch - 1
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
-    scaler_seg = torch.cuda.amp.GradScaler(enabled=amp)
+    scaler_seg = torch.cuda.amp.GradScaler(enabled=False)
     stopper, stop = EarlyStopping(patience=opt.patience), False
     compute_loss = ComputeLoss(model)  # init loss class
     callbacks.run('on_train_start')
@@ -267,6 +270,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f'Starting training for {epochs} epochs...')
+
+    torch.autograd.set_detect_anomaly(True)
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run('on_train_epoch_start')
         model.train()
@@ -294,11 +299,12 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
-            if not torch.all(segs >= 0):
-                print('Pre 0-1 Normalization - SEG MASK NOT VALID')
+            # if not torch.all(segs >= 0):
+            #    print('Pre 0-1 Normalization - SEG MASK NOT VALID')
             segs = segs.to(device, non_blocking=True).float() / 255
-            if not torch.all(segs >= 0):
-                print('Post 0-1 Normalization - SEG MASK NOT VALID')
+            # if not torch.all(segs >= 0):
+            #    print('Post 0-1 Normalization - SEG MASK NOT VALID')
+
             # Warmup
             if ni <= nw:
                 xi = [0, nw]  # x interp
@@ -334,7 +340,10 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     loss *= 4.
 
             # Backward
-            scaler.scale(loss).backward(retain_graph=True)
+            try:
+                scaler.scale(loss).backward(retain_graph=True)
+            except Exception as e:
+                print('\n-------- FOUND EXCEPTION: ', e, ' Life goes on.-------\n')
 
             scaler_seg.scale(loss_seg).backward()
 
@@ -371,6 +380,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
+        # print('\n------LR', lr)
         scheduler.step()
 
         scheduler_seg.step()
@@ -381,6 +391,20 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
             final_epoch = (epoch + 1 == epochs) or stopper.possible_stop
             if not noval or final_epoch:  # Calculate mAP
+                '''
+                # Validation script on train data does not work for Mosaic Aug
+                results_train, maps_train, _ = validate.run(data_dict,
+                                                batch_size=batch_size // WORLD_SIZE * 2,
+                                                imgsz=imgsz,
+                                                half=amp,
+                                                model=ema.ema,
+                                                single_cls=single_cls,
+                                                dataloader=train_loader,
+                                                save_dir=save_dir,
+                                                plots=False,
+                                                callbacks=callbacks,
+                                                compute_loss=compute_loss)
+                '''
                 results, maps, _ = validate.run(data_dict,
                                                 batch_size=batch_size // WORLD_SIZE * 2,
                                                 imgsz=imgsz,
@@ -395,11 +419,14 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
             # Update best mAP
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
+            fi_seg = seg_fitness(np.array(results).reshape(1, -1))
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
+            if fi_seg > best_fitness_seg:
+                best_fitness_seg = fi_seg
             log_vals = list(mloss) + list(results) + lr
-            callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
+            callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi, best_fitness_seg, fi_seg)
 
             # Save model
             if (not nosave) or (final_epoch and not evolve):  # if save
@@ -414,13 +441,27 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     'git': GIT_INFO,  # {remote, branch, commit} if a git repo
                     'date': datetime.now().isoformat()}
 
+                ckpt_seg = {
+                    'epoch': epoch,
+                    'best_fitness': best_fitness_seg,
+                    'model': deepcopy(de_parallel(model)).half(),
+                    'ema': deepcopy(ema.ema).half(),
+                    'updates': ema.updates,
+                    'optimizer': optimizer_seg.state_dict(),
+                    'opt': vars(opt),
+                    'git': GIT_INFO,  # {remote, branch, commit} if a git repo
+                    'date': datetime.now().isoformat()}
+
                 # Save last, best and delete
                 torch.save(ckpt, last)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
+                if best_fitness_seg == fi_seg:
+                    torch.save(ckpt_seg, best_seg)
                 if opt.save_period > 0 and epoch % opt.save_period == 0:
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                 del ckpt
+                del ckpt_seg
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
         # EarlyStopping
@@ -469,7 +510,7 @@ def parse_opt(known=False):
     parser.add_argument('--weights', type=str, default=ROOT / 'yolov5s.pt', help='initial weights path')
     parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='dataset.yaml path')
-    parser.add_argument('--hyp', type=str, default=ROOT / 'data/hyps/hyp.scratch-low.yaml', help='hyperparameters path')
+    parser.add_argument('--hyp', type=str, default=ROOT / 'data/hyps/hyp.scratch-high.yaml', help='hyperparameters path')
     parser.add_argument('--epochs', type=int, default=100, help='total training epochs')
     parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs, -1 for autobatch')
     parser.add_argument('--imgsz', '--img', '--img-size', type=int, default=640, help='train, val image size (pixels)')
@@ -511,7 +552,7 @@ def parse_opt(known=False):
 
 
 def main(opt, callbacks=Callbacks()):
-    print('\n---------- VERSION:', '#0007', '----------\n')
+    # print('\n---------- VERSION:', '#0019_96exp', '----------\n')
     # Checks
     if RANK in {-1, 0}:
         print_args(vars(opt))

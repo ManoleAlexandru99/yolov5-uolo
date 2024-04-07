@@ -87,6 +87,11 @@ class QFocalLoss(nn.Module):
         else:  # 'none'
             return loss
 
+def weighted_bce(y_pred, y_true, BETA=1.5):
+    weights = (y_true * (BETA - 1)) + 1
+    bce = nn.BCEWithLogitsLoss(reduction='none')(y_pred, y_true)
+    wbce = torch.mean(bce * weights)
+    return wbce
 
 class ComputeLoss:
     sort_obj_iou = False
@@ -160,12 +165,6 @@ class ComputeLoss:
                     t[range(n), tcls[i]] = self.cp
                     lcls += self.BCEcls(pcls, t)  # BCE
 
-                # Mask Loss
-                # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
-                # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
-                seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
-                lseg += seg_loss
-
                 # Append targets to text file
                 # with open('targets.txt', 'a') as file:
                 #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
@@ -175,17 +174,38 @@ class ComputeLoss:
             if self.autobalance:
                 self.balance[i] = self.balance[i] * 0.9999 + 0.0001 / obji.detach().item()
 
+        # Mask Loss
+        # print('\n----------- PRED VALID: ', torch.all(pred_mask >= 0), '-----------------\n')
+        # print('\n----------- SEG MASK VALID: ', torch.all(seg_masks >= 0), '-----------------\n')
+        # seg_loss = nn.functional.binary_cross_entropy_with_logits(pred_mask, seg_masks, reduction='none').mean()
+
+        seg_loss = weighted_bce(pred_mask, seg_masks)
+        # focal_loss = FocalLoss(nn.BCEWithLogitsLoss(reduction="none"), gamma=2, alpha=0.25)
+        # seg_loss = focal_loss(pred_mask, seg_masks).mean()
+
+        if torch.isnan(seg_loss):
+            print(pred_mask)
+            print('\nLOSS IS NAN\n')
+            assert False
+
+        # if not torch.all(torch.isnan(torch.cat((lbox, lobj, lcls)))):
+        #     print(torch.cat((lbox, lobj, lcls)))
+        #    assert False
+
+        lseg += seg_loss
+
         if self.autobalance:
             self.balance = [x / self.balance[self.ssi] for x in self.balance]
-        lbox *= self.hyp['box']
-        lobj *= self.hyp['obj']
-        lcls *= self.hyp['cls']
+        lbox *= self.hyp['box'] * self.hyp['det']
+        lobj *= self.hyp['obj'] * self.hyp['det']
+        lcls *= self.hyp['cls'] * self.hyp['det']
+
         bs = tobj.shape[0]  # batch size
-        lseg *= self.hyp['seg'] / bs
+        lseg *= self.hyp['seg']
 
         # return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
         # return total_loss, torch.cat((lbox, lobj, lcls, lseg)).detach()
-        return (lbox + lobj + lcls) * bs * 0, lseg * bs * 1, torch.cat((lbox, lobj, lcls, lseg)).detach()
+        return (lbox + lobj + lcls) * bs, lseg * bs, torch.cat((lbox, lobj, lcls, lseg)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)

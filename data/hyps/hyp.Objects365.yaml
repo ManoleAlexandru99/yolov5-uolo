@@ -7,11 +7,12 @@ lr0: 0.00258
 lrf: 0.17
 momentum: 0.779
 weight_decay: 0.00058
-warmup_epochs: 1.33
+warmup_epochs: 0
 warmup_momentum: 0.86
 warmup_bias_lr: 0.0711
 box: 0.0539
-seg: 0.1 # seg loss
+seg: 1 # Weight for segmentation loss
+det: 1 # Weights all detection losses in the same time (instead of having to change all 3 values)
 cls: 0.299
 cls_pw: 0.825
 obj: 0.632

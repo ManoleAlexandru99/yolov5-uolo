@@ -43,7 +43,7 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, Profile, check_dataset, chec
                            check_yaml, coco80_to_coco91_class, colorstr, increment_path, non_max_suppression,
                            print_args, scale_boxes, xywh2xyxy, xyxy2xywh)
 from utils.metrics import ConfusionMatrix, ap_per_class, box_iou
-from utils.plots import output_to_target, plot_images, plot_val_study
+from utils.plots import output_to_target, plot_images, plot_val_study, plot_masks
 from utils.torch_utils import select_device, smart_inference_mode
 
 
@@ -69,11 +69,11 @@ def save_one_json(predn, jdict, path, class_map):
             'bbox': [round(x, 3) for x in b],
             'score': round(p[4], 5)})
 
-def compute_seg_iou(pred, target, n_classes=2):
+def compute_seg_iou(pred, target, n_classes=2, threshold=0.5):
     ious = []
     pred = torch.sigmoid(pred)
-    pred[pred < 0.5] = 0
-    pred[pred >= 0.5] = 1
+    pred[pred < threshold] = 0
+    pred[pred >= threshold] = 1
     pred = pred.view(-1)
     target = target.view(-1)
     # print(target)
@@ -210,7 +210,7 @@ def run(
     if isinstance(names, (list, tuple)):  # old format
         names = dict(enumerate(names))
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
-    s = ('%22s' + '%11s' * 8) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg mIoU', 'rail IoU')
+    s = ('%22s' + '%11s' * 8) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95', 'Seg mIoU', 'Rail IoU')
     tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     iou = 0.0
     rail_iou = 0.0
@@ -234,12 +234,17 @@ def run(
 
         # Inference
         with dt[1]:
-            preds, pred_mask, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
-
+            try:
+                preds, pred_mask, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
+            except:
+                preds, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
+                pred_mask = preds[1]
+                preds = preds[0]
+            
         ious = compute_seg_iou(pred_mask, segs)
         # print('\n------------ IoU: ', ious, '------------\n')
         iou += (ious[0] + ious[1]) / 2
-        rail_iou = ious[1]
+        rail_iou += ious[1]
 
         # Loss
         if compute_loss:
@@ -299,8 +304,9 @@ def run(
         if plots and batch_i < 3:
             plot_images(im, targets, paths, save_dir / f'val_batch{batch_i}_labels.jpg', names)  # labels
             plot_images(im, output_to_target(preds), paths, save_dir / f'val_batch{batch_i}_pred.jpg', names)  # pred
+            plot_masks(segs, pred_mask,  save_dir / f'val_batch{batch_i}_mask.jpg', save_dir / f'val_batch{batch_i}_gt_real.jpg')
 
-        callbacks.run('on_val_batch_end', batch_i, im, targets, paths, shapes, preds)
+        callbacks.run('on_val_batch_end', batch_i, im, targets, paths, shapes, preds, pred_mask)
 
     # Compute metrics
     stats = [torch.cat(x, 0).cpu().numpy() for x in zip(*stats)]  # to numpy
@@ -321,7 +327,7 @@ def run(
     # Print results per class
     if (verbose or (nc < 50 and not training)) and nc > 1 and len(stats):
         for i, c in enumerate(ap_class):
-            LOGGER.info(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i], iou))
+            LOGGER.info(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i], iou, rail_iou))
 
     # Print speeds
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -368,7 +374,7 @@ def run(
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t
+    return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist(), iou, rail_iou), maps, t
 
 
 def parse_opt():

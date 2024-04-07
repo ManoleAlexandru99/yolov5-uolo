@@ -19,6 +19,10 @@ def fitness(x):
     w = [0.0, 0.0, 0.1, 0.9]  # weights for [P, R, mAP@0.5, mAP@0.5:0.95]
     return (x[:, :4] * w).sum(1)
 
+def seg_fitness(x):
+    w = [0.2, 0.8]  # weights for [mIoU, railIoU]
+    return (x[:, 8:] * w).sum(1)
+
 
 def smooth(y, f=0.05):
     # Box filter of fraction f
